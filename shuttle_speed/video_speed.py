@@ -141,7 +141,7 @@ class VideoSpeedAnalyzer:
         lengths = []
         endpoints: list[tuple[int, int]] = []
         if lines is not None:
-            for raw in lines[:, 0, :]:
+            for raw in lines.reshape(-1, 4):
                 x1, y1, x2, y2 = map(int, raw)
                 dx, dy = abs(x2 - x1), abs(y2 - y1)
                 length = math.hypot(dx, dy)
