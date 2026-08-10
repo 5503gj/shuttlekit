@@ -42,6 +42,7 @@ class VideoSpeedReport:
     court: CourtSizeEstimate
     peak_speed_kmh: float
     average_speed_kmh: float
+    smash_angle_deg: float
     speed_curve: list[float]
     shot_type: str
     shot_confidence: float
@@ -97,6 +98,7 @@ class VideoSpeedAnalyzer:
         cap.release()
 
         speeds: list[float] = []
+        speed_angles: list[float] = []
         for previous, current in zip(points, points[1:]):
             frame_gap = current[0] - previous[0]
             if frame_gap <= 0:
@@ -105,10 +107,14 @@ class VideoSpeedAnalyzer:
             speed_kmh = distance_px / court.px_per_meter * fps / frame_gap * 3.6
             if 1.0 <= speed_kmh <= self.max_speed_kmh:
                 speeds.append(round(speed_kmh, 1))
+                speed_angles.append(round(abs(math.degrees(math.atan2(
+                    current[2] - previous[2], current[1] - previous[1]))), 1))
 
         detection_rate = len(points) / max(1, total_frames)
         peak = max(speeds, default=0.0)
         average = sum(speeds) / len(speeds) if speeds else 0.0
+        peak_index = speeds.index(peak) if speeds else -1
+        smash_angle = speed_angles[peak_index] if peak_index >= 0 else 0.0
         shot_type, shot_confidence = self._classify_shot(peak, detection_rate, court.confidence)
         warnings: list[str] = []
         if court.source == "fallback":
@@ -125,7 +131,8 @@ class VideoSpeedAnalyzer:
             total_frames=total_frames, duration_s=round(duration_s, 2),
             detected_frames=len(points), detection_rate=round(detection_rate, 3),
             court=court, peak_speed_kmh=round(peak, 1),
-            average_speed_kmh=round(average, 1), speed_curve=speeds[-120:],
+            average_speed_kmh=round(average, 1), smash_angle_deg=round(smash_angle, 1),
+            speed_curve=speeds[-120:],
             shot_type=shot_type, shot_confidence=round(shot_confidence, 3),
             warnings=warnings,
         )
