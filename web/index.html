@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ShuttleKit · 球馆实时球速</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">SHUTTLEKIT / VENUE OPS</p>
+          <h1>球馆实时球速</h1>
+          <p class="subtitle">让每一块场地都能看见训练反馈。</p>
+        </div>
+        <div id="connectionBadge" class="badge badge-offline">未连接</div>
+      </header>
+
+      <section class="hero-card">
+        <div class="hero-copy">
+          <span class="live-dot"></span>
+          <span>实时监测控制台</span>
+          <h2>一眼看到这一拍有多快</h2>
+          <p>为球馆提供场地级测速、峰值记录和训练反馈。当前版本支持模拟演示，也已经预留摄像头识别接入接口。</p>
+        </div>
+        <div class="hero-mark" aria-hidden="true">羽</div>
+      </section>
+
+      <section class="control-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">01 / SESSION</p><h3>建立场地会话</h3></div>
+          <span class="hint">每块场地一个实时会话</span>
+        </div>
+        <div class="form-grid">
+          <label>球馆 ID<input id="venueId" value="shanghai-center" /></label>
+          <label>场地 ID<input id="courtId" value="court-01" /></label>
+          <label>摄像头 FPS<input id="fps" type="number" min="1" max="240" value="60" /></label>
+          <label>像素 / 米<input id="pxPerMeter" type="number" min="1" value="50" /></label>
+        </div>
+        <div class="actions">
+          <button id="createBtn" class="button button-primary">创建实时会话</button>
+          <button id="resetBtn" class="button button-quiet" disabled>清空本场数据</button>
+          <span id="sessionLabel" class="session-label">尚未创建会话</span>
+        </div>
+      </section>
+
+      <section class="metrics-grid">
+        <article class="metric-card metric-main"><span>当前球速</span><strong id="currentSpeed">0.0</strong><small>km/h</small></article>
+        <article class="metric-card"><span>本场峰值</span><strong id="peakSpeed">0.0</strong><small>km/h</small></article>
+        <article class="metric-card"><span>平均球速</span><strong id="averageSpeed">0.0</strong><small>km/h</small></article>
+        <article class="metric-card"><span>有效样本</span><strong id="sampleCount">0</strong><small>次</small></article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel chart-panel">
+          <div class="panel-heading"><div><p class="eyebrow">02 / LIVE CHART</p><h3>球速走势</h3></div><span id="qualityLabel">等待数据</span></div>
+          <canvas id="speedChart" width="900" height="300"></canvas>
+          <div class="chart-axis"><span>最近 30 次有效击球</span><span>km/h</span></div>
+        </article>
+
+        <article class="panel demo-panel">
+          <div class="panel-heading"><div><p class="eyebrow">03 / DEMO</p><h3>模拟击球</h3></div><span class="demo-tag">演示模式</span></div>
+          <p class="panel-note">点击按钮模拟一条球的移动轨迹，验证球馆大屏、WebSocket 和小程序链路。</p>
+          <div class="demo-buttons">
+            <button class="shot-button" data-speed="90"><span>训练球</span><strong>90</strong><small>km/h</small></button>
+            <button class="shot-button" data-speed="180"><span>平抽球</span><strong>180</strong><small>km/h</small></button>
+            <button class="shot-button shot-hot" data-speed="320"><span>杀球</span><strong>320</strong><small>km/h</small></button>
+          </div>
+          <div class="integration-note"><b>真实接入路径</b><span>固定摄像头 → TrackNet / YOLO 检测球心 → 标定像素比例 → WebSocket 推送坐标</span></div>
+        </article>
+      </section>
+
+      <footer class="footer"><span>ShuttleKit · 羽毛球场馆数字化工具箱</span><span id="lastUpdate">等待连接</span></footer>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
