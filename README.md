@@ -233,6 +233,12 @@ python speed_api.py
 
 当前 MVP 使用进程内存保存会话，适合本地演示和单球馆验证；面向真实球馆部署时，还需要接入数据库、账号权限、设备管理、HTTPS/WSS、异常告警和多租户隔离。
 
+### 装备库与合规数据接入
+
+网站和微信小程序现在共用装备接口：`GET /api/equipment/stats`、`GET /api/equipment/catalog`、`POST /api/equipment/recommend`。推荐结果会返回匹配理由和来源字段。
+
+项目不绕过中羽在线、淘宝或京东的验证码、登录限制和频控。优先使用品牌官网、获得授权的公开评测、官方开放平台 API、用户投稿和人工整理的事实摘要。完整更新方案见 [docs/EQUIPMENT_DATA_POLICY.md](./docs/EQUIPMENT_DATA_POLICY.md)。
+
 ---
 
 ## License
