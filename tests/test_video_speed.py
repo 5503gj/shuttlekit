@@ -30,6 +30,7 @@ def test_video_analyzer_estimates_court_and_speed(tmp_path):
     assert report.court.length_m == 13.4
     assert report.court.width_m in (5.18, 6.1)
     assert report.peak_speed_kmh > 0
+    assert 0 <= report.smash_angle_deg <= 180
     assert report.shot_type in {"疑似杀球", "快速平抽", "高远球/快球", "慢速击球"}
 
 
