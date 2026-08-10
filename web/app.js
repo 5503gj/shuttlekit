@@ -92,10 +92,23 @@ async function analyzeVideo() {
   } catch (error) { $("videoStatus").textContent = error.message; alert(error.message); }
   finally { button.disabled = false; }
 }
+function formatEquipmentPrice(item) { return item.price_min != null && item.price_max != null ? `${item.price_min}-${item.price_max} 元` : "价格以实际渠道为准"; }
+function renderEquipmentResults(payload) {
+  const container = $("equipmentResults"); container.innerHTML = "";
+  if (!payload.results?.length) { container.innerHTML = '<div class="history-empty">当前画像暂无匹配结果。</div>'; return; }
+  payload.results.forEach((match) => { const item = match.item, card = document.createElement("div"); card.className = "equipment-card"; card.innerHTML = `<h4>${item.brand || ""} ${item.model || ""}</h4><div class="equip-meta">匹配分 ${Number(match.score || 0).toFixed(0)} · 评分 ${item.rating || "—"}</div><div class="equip-price">${formatEquipmentPrice(item)}</div><div class="equip-reasons">${(match.reasons || []).join(" · ") || "综合匹配"}<br>${Object.entries(item.specs || {}).map(([key, value]) => `${key}: ${value}`).join(" · ")}</div><div class="equip-source">来源：${item.source || "未标注"}</div>`; container.appendChild(card); });
+}
+async function recommendEquipment() {
+  const payload = { category: $("equipmentCategory").value, level: $("equipmentLevel").value, budget: Number($("equipmentBudget").value), play_style: $("equipmentStyle").value, gender: "不限", top_k: 6 };
+  const button = $("recommendEquipmentBtn"); button.disabled = true; $("equipmentResults").innerHTML = '<div class="history-empty">正在匹配装备…</div>';
+  try { const response = await fetch("/api/equipment/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || "推荐失败"); renderEquipmentResults(data); } catch (error) { $("equipmentResults").innerHTML = `<div class="history-empty">${error.message}</div>`; } finally { button.disabled = false; }
+}
+async function loadEquipmentStats() { try { const response = await fetch("/api/equipment/stats"); const data = await response.json(); $("equipmentStats").textContent = `${data.total} 款样本 · 非实时爬取`; } catch (error) { $("equipmentStats").textContent = "装备库离线"; } }
 $("createBtn").addEventListener("click", createSession);
 $("resetBtn").addEventListener("click", () => { if (state.socket?.readyState === WebSocket.OPEN) state.socket.send(JSON.stringify({ type: "reset" })); state.history = []; });
 document.querySelectorAll(".shot-button").forEach((button) => button.addEventListener("click", () => simulateShot(Number(button.dataset.speed))));
 $("videoFile").addEventListener("change", () => { const file = $("videoFile").files[0]; $("videoStatus").textContent = file ? `${file.name} · 准备上传` : "尚未选择视频"; });
 $("analyzeVideoBtn").addEventListener("click", analyzeVideo);
 $("shareVideoBtn").addEventListener("click", shareVideoResult);
-window.addEventListener("resize", drawChart); drawChart(); renderVideoHistory();
+$("recommendEquipmentBtn").addEventListener("click", recommendEquipment);
+window.addEventListener("resize", drawChart); drawChart(); renderVideoHistory(); loadEquipmentStats();
