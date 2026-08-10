@@ -1,0 +1,39 @@
+{
+  "match_info": {
+    "player_a": "选手A",
+    "player_b": "选手B",
+    "date": "2026-08-10",
+    "venue": "体育馆1号场",
+    "game_type": "单打",
+    "best_of": 3
+  },
+  "points": [
+    {
+      "rally": 1,
+      "server": "A",
+      "winner": "A",
+      "score_a": 1,
+      "score_b": 0,
+      "shot_type": "杀球",
+      "duration": 8.5,
+      "note": "后场杀球得分"
+    },
+    {
+      "rally": 2,
+      "server": "A",
+      "winner": "B",
+      "score_a": 1,
+      "score_b": 1,
+      "shot_type": "吊球",
+      "duration": 6.2,
+      "note": "网前吊球得分"
+    }
+  ],
+  "summary": {
+    "total_rallies": 2,
+    "final_score": "1-1",
+    "avg_rally_duration": 7.35,
+    "longest_rally": 8.5,
+    "shortest_rally": 6.2
+  }
+}
