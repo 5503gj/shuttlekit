@@ -87,6 +87,19 @@
           <div id="historyEmpty" class="history-empty">完成一次视频分析后，这里会显示峰值、角度和击球判断。</div>
           <div id="historyList" class="history-list"></div>
         </article>
+
+        <article class="panel equipment-panel">
+          <div class="panel-heading"><div><p class="eyebrow">06 / EQUIPMENT ADVISOR</p><h3>装备库与个性化推荐</h3></div><span id="equipmentStats">加载装备库…</span></div>
+          <p class="panel-note">基于现有样本库进行推荐，展示品牌规格、打法匹配和来源。数据采用品牌公开规格、公开评测人工整理和后续授权数据，不依赖中羽实时爬取。</p>
+          <div class="equipment-controls">
+            <label>装备类型<select id="equipmentCategory"><option value="racket">球拍</option><option value="shoe">球鞋</option><option value="shuttlecock">羽毛球</option></select></label>
+            <label>水平<select id="equipmentLevel"><option>入门</option><option selected>中级</option><option>高级</option></select></label>
+            <label>预算（元）<input id="equipmentBudget" type="number" min="0" value="1000" /></label>
+            <label>打法<select id="equipmentStyle"><option>全面</option><option>进攻</option><option>速度</option><option>双打后场</option><option>双打前场</option><option>比赛</option><option>训练</option></select></label>
+            <button id="recommendEquipmentBtn" class="button button-primary">生成推荐</button>
+          </div>
+          <div id="equipmentResults" class="equipment-results"><div class="history-empty">填写画像后生成推荐。</div></div>
+        </article>
       </section>
 
       <footer class="footer"><span>ShuttleKit · 羽毛球场馆数字化工具箱</span><span id="lastUpdate">等待连接</span></footer>
