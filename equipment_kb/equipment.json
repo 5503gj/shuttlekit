@@ -1,0 +1,491 @@
+[
+  {
+    "id": "racket_yonex_astrox88d",
+    "category": "racket",
+    "brand": "YONEX",
+    "model": "天斧 88D Pro",
+    "price_min": 1200,
+    "price_max": 1500,
+    "specs": {
+      "weight": "4U(83g)",
+      "balance": "头重",
+      "stiffness": "硬"
+    },
+    "play_styles": [
+      "进攻",
+      "双打后场"
+    ],
+    "levels": [
+      "中级",
+      "高级"
+    ],
+    "rating": 4.6,
+    "review_summary": "旋转生成系统，后场进攻暴力，但上手门槛高，需一定力量基础。中羽在线多数评测认为双打后场利器。",
+    "source": "品牌官网规格 + 中羽在线公开评测整理"
+  },
+  {
+    "id": "racket_yonex_arc10pro",
+    "category": "racket",
+    "brand": "YONEX",
+    "model": "弓箭 10 Pro",
+    "price_min": 1000,
+    "price_max": 1300,
+    "specs": {
+      "weight": "4U(83g)",
+      "balance": "平衡",
+      "stiffness": "适中"
+    },
+    "play_styles": [
+      "全面",
+      "控制"
+    ],
+    "levels": [
+      "中级"
+    ],
+    "rating": 4.5,
+    "review_summary": "方头拍框，控制性好，容错率高，攻守兼备。新手到中级都适用，经典全能拍。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "racket_victor_js10",
+    "category": "racket",
+    "brand": "VICTOR",
+    "model": "神速 90K",
+    "price_min": 800,
+    "price_max": 1100,
+    "specs": {
+      "weight": "4U(84g)",
+      "balance": "头轻",
+      "stiffness": "偏硬"
+    },
+    "play_styles": [
+      "速度",
+      "双打前场"
+    ],
+    "levels": [
+      "中级"
+    ],
+    "rating": 4.4,
+    "review_summary": "速度型球拍，挥速快，适合平抽挡。双打前场选手首选，被动球摆脱快。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "racket_lining_fengren500",
+    "category": "racket",
+    "brand": "LI-NING",
+    "model": "风刃 500",
+    "price_min": 500,
+    "price_max": 700,
+    "specs": {
+      "weight": "4U(82g)",
+      "balance": "平衡偏头重",
+      "stiffness": "适中"
+    },
+    "play_styles": [
+      "全面",
+      "入门"
+    ],
+    "levels": [
+      "初中级",
+      "入门"
+    ],
+    "rating": 4.3,
+    "review_summary": "性价比高，碳纤维中杆弹性好。预算有限的入门首选，全场地通用。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "racket_yonex_nanoflare800",
+    "category": "racket",
+    "brand": "YONEX",
+    "model": "疾光 800",
+    "price_min": 400,
+    "price_max": 600,
+    "specs": {
+      "weight": "5U(78g)",
+      "balance": "头轻",
+      "stiffness": "偏软"
+    },
+    "play_styles": [
+      "速度",
+      "入门"
+    ],
+    "levels": [
+      "入门"
+    ],
+    "rating": 4.2,
+    "review_summary": "超轻量，易上手，挥拍省力。完全新手或力量偏弱者推荐。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "racket_victor_brave12",
+    "category": "racket",
+    "brand": "VICTOR",
+    "model": "亮剑 12",
+    "price_min": 600,
+    "price_max": 900,
+    "specs": {
+      "weight": "4U(85g)",
+      "balance": "头重",
+      "stiffness": "偏硬"
+    },
+    "play_styles": [
+      "进攻",
+      "单打"
+    ],
+    "levels": [
+      "中级"
+    ],
+    "rating": 4.3,
+    "review_summary": "经典进攻拍，杀球有力。喜欢杀球但预算有限的选择，单打进攻适用。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "racket_kawasaki_musclepower",
+    "category": "racket",
+    "brand": "KAWASAKI",
+    "model": "锐速 3200",
+    "price_min": 200,
+    "price_max": 350,
+    "specs": {
+      "weight": "5U(79g)",
+      "balance": "平衡",
+      "stiffness": "适中"
+    },
+    "play_styles": [
+      "入门",
+      "娱乐"
+    ],
+    "levels": [
+      "入门",
+      "娱乐"
+    ],
+    "rating": 4.0,
+    "review_summary": "百元级高性价比，适合纯新手和娱乐玩家入门过渡。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "shoe_yonex_shb65z3",
+    "category": "shoe",
+    "brand": "YONEX",
+    "model": "SHB-65Z3",
+    "price_min": 600,
+    "price_max": 900,
+    "specs": {
+      "type": "室内",
+      "cushion": "高",
+      "support": "高",
+      "weight": "轻"
+    },
+    "play_styles": [
+      "进攻",
+      "速度"
+    ],
+    "levels": [
+      "中级",
+      "高级"
+    ],
+    "rating": 4.5,
+    "review_summary": "动力垫缓震好，侧向支撑稳，包裹性强。适合频繁变向的进攻型选手，经典旗舰鞋。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "shoe_yonex_shbff3",
+    "category": "shoe",
+    "brand": "YONEX",
+    "model": "SHB-FF3",
+    "price_min": 400,
+    "price_max": 650,
+    "specs": {
+      "type": "室内",
+      "cushion": "中",
+      "support": "中",
+      "weight": "超轻"
+    },
+    "play_styles": [
+      "速度",
+      "双打前场"
+    ],
+    "levels": [
+      "中级",
+      "入门"
+    ],
+    "rating": 4.3,
+    "review_summary": "超轻设计，启动快，适合双打前场速度型。缓震偏弱，大体重慎选。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "shoe_victor_p9200",
+    "category": "shoe",
+    "brand": "VICTOR",
+    "model": "P9200",
+    "price_min": 450,
+    "price_max": 700,
+    "specs": {
+      "type": "室内",
+      "cushion": "高",
+      "support": "高",
+      "weight": "中"
+    },
+    "play_styles": [
+      "进攻",
+      "全面"
+    ],
+    "levels": [
+      "中级",
+      "高级"
+    ],
+    "rating": 4.4,
+    "review_summary": "支撑和缓震均衡，耐用性好。大体重和进攻型选手友好，性价比高。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "shoe_lining_airforce1",
+    "category": "shoe",
+    "brand": "LI-NING",
+    "model": "风动 Air Force 1",
+    "price_min": 350,
+    "price_max": 550,
+    "specs": {
+      "type": "室内",
+      "cushion": "中高",
+      "support": "中",
+      "weight": "中"
+    },
+    "play_styles": [
+      "全面",
+      "入门"
+    ],
+    "levels": [
+      "初中级",
+      "入门"
+    ],
+    "rating": 4.2,
+    "review_summary": "国产性价比之选，缓震够用，外观好看。新手入门过渡合适。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "shoe_asics_gelrocket",
+    "category": "shoe",
+    "brand": "ASICS",
+    "model": "GEL-ROCKET 10",
+    "price_min": 300,
+    "price_max": 450,
+    "specs": {
+      "type": "室内",
+      "cushion": "中",
+      "support": "中",
+      "weight": "中"
+    },
+    "play_styles": [
+      "入门",
+      "娱乐"
+    ],
+    "levels": [
+      "入门",
+      "娱乐"
+    ],
+    "rating": 4.1,
+    "review_summary": "羽毛球/排球通用鞋，GEL 缓震可靠。预算有限的入门备选。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "shuttle_yonex_as50",
+    "category": "shuttlecock",
+    "brand": "YONEX",
+    "model": "AS-50",
+    "price_min": 200,
+    "price_max": 260,
+    "specs": {
+      "material": "鹅毛(顶级)",
+      "speed": "76/77/78",
+      "durability": "高"
+    },
+    "play_styles": [
+      "比赛",
+      "训练"
+    ],
+    "levels": [
+      "中级",
+      "高级"
+    ],
+    "rating": 4.7,
+    "review_summary": "飞行稳定、耐打，比赛级用球。价格高但体验最佳，业余正式比赛常用。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "shuttle_yonex_as05",
+    "category": "shuttlecock",
+    "brand": "YONEX",
+    "model": "AS-05",
+    "price_min": 90,
+    "price_max": 130,
+    "specs": {
+      "material": "鹅毛",
+      "speed": "76/77/78",
+      "durability": "中高"
+    },
+    "play_styles": [
+      "训练",
+      "娱乐"
+    ],
+    "levels": [
+      "初中级",
+      "入门"
+    ],
+    "rating": 4.5,
+    "review_summary": "性价比比赛级用球，耐打稳定。日常训练和进阶玩家首选。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "shuttle_victor_masterace",
+    "category": "shuttlecock",
+    "brand": "VICTOR",
+    "model": "Master Ace",
+    "price_min": 100,
+    "price_max": 150,
+    "specs": {
+      "material": "鹅毛",
+      "speed": "76/77/78",
+      "durability": "中高"
+    },
+    "play_styles": [
+      "训练",
+      "比赛"
+    ],
+    "levels": [
+      "中级",
+      "高级"
+    ],
+    "rating": 4.4,
+    "review_summary": "飞行手感接近 YONEX 比赛球，价格更友好。俱乐部训练常用。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "shuttle_lining_a300",
+    "category": "shuttlecock",
+    "brand": "LI-NING",
+    "model": "A+300",
+    "price_min": 70,
+    "price_max": 110,
+    "specs": {
+      "material": "鸭毛",
+      "speed": "76/77/78",
+      "durability": "中"
+    },
+    "play_styles": [
+      "娱乐",
+      "入门"
+    ],
+    "levels": [
+      "入门",
+      "娱乐"
+    ],
+    "rating": 4.2,
+    "review_summary": "鸭毛入门球，价格亲民。新手练球、娱乐局够用，耐打一般。",
+    "source": "品牌官网规格 + 公开评测整理"
+  },
+  {
+    "id": "racket_yonex_11_pro",
+    "category": "racket",
+    "brand": "YONEX",
+    "model": "弓箭 11 Pro",
+    "price_min": null,
+    "price_max": null,
+    "specs": {},
+    "play_styles": [
+      "全面",
+      "单打"
+    ],
+    "levels": [],
+    "rating": null,
+    "review_summary": "全场地单打控制型球拍，均衡平衡点经典框型，网前与小球控制好，适合从入门均衡拍进阶的俱乐部选手。",
+    "description_en": "All-court singles control. The reference even-balance singles frame — enough hold for tight net work without the head-heavy lag that punishes late recovery. Consistent choice for club players stepping up from beginner even-balance frames.",
+    "source": "intobadminton.com (JSON-LD 真实评测，价格/规格以实际渠道为准)"
+  },
+  {
+    "id": "racket_yonex_99_pro",
+    "category": "racket",
+    "brand": "YONEX",
+    "model": "天斧 99 Pro",
+    "price_min": null,
+    "price_max": null,
+    "specs": {},
+    "play_styles": [
+      "进攻",
+      "单打"
+    ],
+    "levels": [],
+    "rating": null,
+    "review_summary": "单打后场进攻平台，头重杀球几何，硬中杆奖励稳定击球时机，适合稳定从后场发动进攻的单打选手。",
+    "description_en": "Singles rear-court attack. Head-heavy smash platform for singles players who reliably play from the back and want maximum shuttle speed on winners. The stiff shaft rewards clean timing.",
+    "source": "intobadminton.com (JSON-LD 真实评测，价格/规格以实际渠道为准)"
+  },
+  {
+    "id": "racket_li_ning_halbertec_9000_power",
+    "category": "racket",
+    "brand": "LI-NING",
+    "model": "Halbertec 9000 Power",
+    "price_min": null,
+    "price_max": null,
+    "specs": {},
+    "play_styles": [
+      "进攻"
+    ],
+    "levels": [],
+    "rating": null,
+    "review_summary": "性价比单打力量拍，低于 YONEX 旗舰价位提供头重力量，想要头重质量又不想花旗舰价的单打优选。",
+    "description_en": "Value singles power. Thunder-platform power at a lower price tier than Yonex flagships. Strong singles option when you want head-heavy mass without flagship pricing.",
+    "source": "intobadminton.com (JSON-LD 真实评测，价格/规格以实际渠道为准)"
+  },
+  {
+    "id": "racket_yonex_700_pro",
+    "category": "racket",
+    "brand": "YONEX",
+    "model": "疾光 700 Pro",
+    "price_min": null,
+    "price_max": null,
+    "specs": {},
+    "play_styles": [
+      "速度"
+    ],
+    "levels": [],
+    "rating": null,
+    "review_summary": "速度优先单打/女单，头轻利于长时间多拍与平抽，适合以节奏和平抽见长的打法。",
+    "description_en": "Speed-first singles / women's singles. When your singles game is built on pace and flat exchanges rather than rear-court burying. Head-light recovery helps in long deuce games.",
+    "source": "intobadminton.com (JSON-LD 真实评测，价格/规格以实际渠道为准)"
+  },
+  {
+    "id": "racket_victor_90k_ii",
+    "category": "racket",
+    "brand": "VICTOR",
+    "model": "神速 90K II",
+    "price_min": null,
+    "price_max": null,
+    "specs": {},
+    "play_styles": [
+      "全面"
+    ],
+    "levels": [],
+    "rating": null,
+    "review_summary": "VICTOR 速度型均衡单打主力，平抽快、全场地覆盖稳定，俱乐部级适用。",
+    "description_en": "Singles all-court Victor option. Victor's stiff even-balance singles workhorse — fast flat exchanges with enough stability for full-court coverage at club level.",
+    "source": "intobadminton.com (JSON-LD 真实评测，价格/规格以实际渠道为准)"
+  },
+  {
+    "id": "racket_li_ning_100",
+    "category": "racket",
+    "brand": "LI-NING",
+    "model": "雷霆 100 (二代)",
+    "price_min": null,
+    "price_max": null,
+    "specs": {},
+    "play_styles": [
+      "进攻"
+    ],
+    "levels": [],
+    "rating": null,
+    "review_summary": "入门级进攻，缩小的旗舰进攻几何，想要头重手感又不想花天斧99价钱的单打选手。",
+    "description_en": "Budget singles attack. Scaled-down flagship attack geometry for singles players who want head-heavy bite without Astrox 99 Pro pricing.",
+    "source": "intobadminton.com (JSON-LD 真实评测，价格/规格以实际渠道为准)"
+  }
+]
