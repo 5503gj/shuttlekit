@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from shuttle_speed.realtime import SpeedSessionStore
 from shuttle_speed.video_speed import VideoSpeedAnalyzer
+from equipment_kb.recommender import EquipmentRecommender, UserProfile
 
 
 class SessionCreate(BaseModel):
@@ -31,11 +32,21 @@ class PointPayload(BaseModel):
     timestamp: Optional[float] = None
 
 
+class EquipmentRecommendPayload(BaseModel):
+    category: str = Field(default="racket", pattern="^(racket|shoe|shuttlecock)$")
+    level: str = Field(default="中级", min_length=1, max_length=30)
+    budget: float = Field(default=800.0, ge=0, le=100000)
+    play_style: str = Field(default="全面", min_length=1, max_length=30)
+    gender: str = Field(default="不限", min_length=1, max_length=10)
+    top_k: int = Field(default=5, ge=1, le=10)
+
+
 app = FastAPI(title="ShuttleKit Speed API", version="0.2.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
                    allow_methods=["*"], allow_headers=["*"])
 store = SpeedSessionStore()
 video_analyzer = VideoSpeedAnalyzer()
+equipment_recommender = EquipmentRecommender()
 
 
 def _session_or_404(session_id: str):
@@ -78,6 +89,50 @@ def add_point(session_id: str, payload: PointPayload) -> dict:
 @app.post("/api/sessions/{session_id}/reset")
 def reset_session(session_id: str) -> dict:
     return _session_or_404(session_id).reset()
+
+
+def _equipment_item_view(item: dict) -> dict:
+    """只返回前端需要的字段，同时保留来源，避免无来源推荐。"""
+    return {
+        "id": item.get("id"), "category": item.get("category"),
+        "brand": item.get("brand"), "model": item.get("model"),
+        "price_min": item.get("price_min"), "price_max": item.get("price_max"),
+        "specs": item.get("specs") or {}, "play_styles": item.get("play_styles") or [],
+        "levels": item.get("levels") or [], "rating": item.get("rating"),
+        "review_summary": item.get("review_summary", ""),
+        "source": item.get("source", "未标注来源"),
+        "source_url": item.get("source_url", ""),
+    }
+
+
+@app.get("/api/equipment/stats")
+def equipment_stats() -> dict:
+    stats = equipment_recommender.get_stats()
+    return {"stats": stats, "total": len(equipment_recommender.equipment),
+            "data_policy": "品牌规格 + 公开评测人工整理；非实时爬取"}
+
+
+@app.get("/api/equipment/catalog")
+def equipment_catalog(category: Optional[str] = None) -> dict:
+    allowed = {"racket", "shoe", "shuttlecock"}
+    if category and category not in allowed:
+        raise HTTPException(status_code=422, detail="category 必须是 racket、shoe 或 shuttlecock")
+    items = equipment_recommender.equipment if not category else equipment_recommender.get_by_category(category)
+    return {"category": category, "count": len(items), "items": [_equipment_item_view(item) for item in items]}
+
+
+@app.post("/api/equipment/recommend")
+def equipment_recommend(payload: EquipmentRecommendPayload) -> dict:
+    profile = UserProfile(payload.category, payload.level, payload.budget,
+                          payload.play_style, payload.gender)
+    matches = equipment_recommender.recommend(profile, top_k=payload.top_k)
+    profile_data = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+    return {
+        "profile": profile_data,
+        "count": len(matches),
+        "results": [{"score": round(match.score, 1), "reasons": match.reasons,
+                      "item": _equipment_item_view(match.item)} for match in matches],
+    }
 
 
 @app.post("/api/video/analyze")
