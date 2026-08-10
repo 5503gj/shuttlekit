@@ -9,12 +9,13 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from shuttle_speed.realtime import SpeedSessionStore
+from shuttle_speed.video_speed import VideoSpeedAnalyzer
 
 
 class SessionCreate(BaseModel):
@@ -34,6 +35,7 @@ app = FastAPI(title="ShuttleKit Speed API", version="0.2.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
                    allow_methods=["*"], allow_headers=["*"])
 store = SpeedSessionStore()
+video_analyzer = VideoSpeedAnalyzer()
 
 
 def _session_or_404(session_id: str):
@@ -76,6 +78,29 @@ def add_point(session_id: str, payload: PointPayload) -> dict:
 @app.post("/api/sessions/{session_id}/reset")
 def reset_session(session_id: str) -> dict:
     return _session_or_404(session_id).reset()
+
+
+@app.post("/api/video/analyze")
+async def analyze_video(file: UploadFile = File(...)) -> dict:
+    """上传短视频并返回场地尺寸、球速和击球类型判断。"""
+    suffix = Path(file.filename or "video.mp4").suffix.lower()
+    if suffix not in {".mp4", ".mov", ".avi", ".mkv", ".webm"}:
+        raise HTTPException(status_code=415, detail="仅支持 MP4、MOV、AVI、MKV、WEBM 视频")
+    content = await file.read()
+    if len(content) > 200 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="视频不能超过 200MB")
+    temp_path = None
+    try:
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp:
+            temp.write(content)
+            temp_path = temp.name
+        return video_analyzer.analyze(temp_path, video_name=file.filename).to_dict()
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    finally:
+        if temp_path:
+            Path(temp_path).unlink(missing_ok=True)
 
 
 @app.websocket("/ws/sessions/{session_id}")
