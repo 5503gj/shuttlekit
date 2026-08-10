@@ -1,0 +1,80 @@
+[
+  {
+    "id": "racket_001",
+    "name": "尤尼克斯天斧88D Pro",
+    "brand": "YONEX",
+    "weight": "4U (83g)",
+    "balance": "头重",
+    "stiffness": "中杆偏硬",
+    "price_range": "1200-1500",
+    "level": "中高级",
+    "suitable_for": "后场进攻、双打后场",
+    "features": "旋转生成系统+纽式钛纤维，进攻性强",
+    "tips": "适合有一定基础的后场进攻型选手"
+  },
+  {
+    "id": "racket_002",
+    "name": "尤尼克斯弓箭10 Pro",
+    "brand": "YONEX",
+    "weight": "4U (83g)",
+    "balance": "平衡",
+    "stiffness": "中杆适中",
+    "price_range": "1000-1300",
+    "level": "中级",
+    "suitable_for": "攻守兼备、单打双打通用",
+    "features": "方头拍框，控制性好，容错率高",
+    "tips": "经典全能拍，适合不确定自己打法的新手"
+  },
+  {
+    "id": "racket_003",
+    "name": "威克多神速90K",
+    "brand": "VICTOR",
+    "weight": "4U (84g)",
+    "balance": "头轻",
+    "stiffness": "中杆偏硬",
+    "price_range": "800-1100",
+    "level": "中级",
+    "suitable_for": "前场快攻、双打前场",
+    "features": "速度型球拍，挥速快，适合平抽挡",
+    "tips": "双打前场选手首选"
+  },
+  {
+    "id": "racket_004",
+    "name": "李宁风刃500",
+    "brand": "LI-NING",
+    "weight": "4U (82g)",
+    "balance": "平衡偏头重",
+    "stiffness": "中杆适中",
+    "price_range": "500-700",
+    "level": "初中级",
+    "suitable_for": "新手入门、全场地通用",
+    "features": "性价比高，碳纤维中杆，弹性好",
+    "tips": "预算有限的入门首选"
+  },
+  {
+    "id": "racket_005",
+    "name": "尤尼克斯疾光800",
+    "brand": "YONEX",
+    "weight": "5U (78g)",
+    "balance": "头轻",
+    "stiffness": "中杆偏软",
+    "price_range": "400-600",
+    "level": "入门",
+    "suitable_for": "新手、女性、力量不足者",
+    "features": "超轻量，易上手，挥拍省力",
+    "tips": "完全新手或力量偏弱者推荐"
+  },
+  {
+    "id": "racket_006",
+    "name": "威克多亮剑12",
+    "brand": "VICTOR",
+    "weight": "4U (85g)",
+    "balance": "头重",
+    "stiffness": "中杆偏硬",
+    "price_range": "600-900",
+    "level": "中级",
+    "suitable_for": "单打进攻",
+    "features": "经典进攻拍，杀球有力",
+    "tips": "喜欢杀球但预算有限的选择"
+  }
+]
