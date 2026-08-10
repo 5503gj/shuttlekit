@@ -52,6 +52,7 @@ function renderVideoReport(report) {
   $("videoConfidence").textContent = `置信度 ${Math.round(Number(report.shot_confidence || 0) * 100)}%`;
   $("videoPeak").textContent = `${Number(report.peak_speed_kmh || 0).toFixed(1)} km/h`;
   $("videoAverage").textContent = `${Number(report.average_speed_kmh || 0).toFixed(1)} km/h`;
+  $("videoAngle").textContent = `${Number(report.smash_angle_deg || 0).toFixed(1)}°`;
   const court = report.court || {};
   $("videoCourtSize").textContent = `${court.length_m || 0} × ${court.width_m || 0} m（${court.court_type || "未知"}）`;
   $("videoDetectionRate").textContent = `${Math.round(Number(report.detection_rate || 0) * 100)}%`;
@@ -59,6 +60,25 @@ function renderVideoReport(report) {
   const warnings = $("videoWarnings"); warnings.innerHTML = "";
   (report.warnings || []).forEach((warning) => { const item = document.createElement("li"); item.textContent = warning; warnings.appendChild(item); });
   state.history = (report.speed_curve || []).map(Number).slice(-30); drawChart();
+  saveVideoHistory(report);
+}
+function loadVideoHistory() { try { return JSON.parse(localStorage.getItem("shuttlekit.videoHistory") || "[]"); } catch (error) { return []; } }
+function saveVideoHistory(report) {
+  const records = loadVideoHistory(); records.unshift({ at: new Date().toISOString(), name: report.video_name, shot: report.shot_type, peak: Number(report.peak_speed_kmh || 0), average: Number(report.average_speed_kmh || 0), angle: Number(report.smash_angle_deg || 0) });
+  localStorage.setItem("shuttlekit.videoHistory", JSON.stringify(records.slice(0, 20))); renderVideoHistory();
+}
+function renderVideoHistory() {
+  const records = loadVideoHistory(), list = $("historyList"), empty = $("historyEmpty");
+  $("historySummary").textContent = `${records.length} 次视频 · 最佳 ${records.length ? Math.max(...records.map((item) => item.peak)).toFixed(1) : "0.0"} km/h`;
+  empty.classList.toggle("hidden", records.length > 0); list.innerHTML = "";
+  records.slice(0, 8).forEach((item) => { const row = document.createElement("div"); row.className = "history-item"; row.innerHTML = `<span>${new Date(item.at).toLocaleString()}</span><strong>${item.peak.toFixed(1)} km/h</strong><span>平均 ${item.average.toFixed(1)}</span><span>角度 ${item.angle.toFixed(1)}°</span><span>${item.shot}</span>`; list.appendChild(row); });
+}
+function shareVideoResult() {
+  const canvas = document.createElement("canvas"); canvas.width = 1000; canvas.height = 560; const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#113e2d"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#d7f46b"; ctx.font = "700 30px sans-serif"; ctx.fillText("SHUTTLEKIT / SMASH RESULT", 60, 70);
+  ctx.fillStyle = "#ffffff"; ctx.font = "800 76px sans-serif"; ctx.fillText($("videoShotType").textContent, 60, 180); ctx.fillStyle = "#d7f46b"; ctx.font = "800 92px sans-serif"; ctx.fillText($("videoPeak").textContent, 60, 310);
+  ctx.fillStyle = "#d9f1dd"; ctx.font = "28px sans-serif"; ctx.fillText(`角度 ${$("videoAngle").textContent}   平均 ${$("videoAverage").textContent}`, 60, 385); ctx.fillText(`置信度 ${$("videoConfidence").textContent.replace("置信度 ", "")}`, 60, 440); ctx.fillStyle = "#ffffff99"; ctx.font = "20px sans-serif"; ctx.fillText("视频分析结果 · 仅供训练参考", 60, 510);
+  canvas.toBlob((blob) => { const link = document.createElement("a"); link.download = "shuttlekit-smash-result.png"; link.href = URL.createObjectURL(blob); link.click(); URL.revokeObjectURL(link.href); });
 }
 async function analyzeVideo() {
   const file = $("videoFile").files[0];
@@ -77,4 +97,5 @@ $("resetBtn").addEventListener("click", () => { if (state.socket?.readyState ===
 document.querySelectorAll(".shot-button").forEach((button) => button.addEventListener("click", () => simulateShot(Number(button.dataset.speed))));
 $("videoFile").addEventListener("change", () => { const file = $("videoFile").files[0]; $("videoStatus").textContent = file ? `${file.name} · 准备上传` : "尚未选择视频"; });
 $("analyzeVideoBtn").addEventListener("click", analyzeVideo);
-window.addEventListener("resize", drawChart); drawChart();
+$("shareVideoBtn").addEventListener("click", shareVideoResult);
+window.addEventListener("resize", drawChart); drawChart(); renderVideoHistory();
