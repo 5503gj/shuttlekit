@@ -49,6 +49,14 @@ cd ShuttleKit
 pip install -r requirements.txt
 ```
 
+### 启动网页
+
+```bash
+python badminton_web.py
+```
+
+浏览器打开 `http://127.0.0.1:7861`，可以体验场馆图片分析、比赛数据看板和器材推荐。
+
 ### 30 秒体验：场馆灯光评估
 
 ```bash
