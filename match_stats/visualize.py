@@ -22,6 +22,11 @@ class StatsVisualizer:
 
     def __init__(self, font_size: int = 12):
         plt.rcParams['font.size'] = font_size
+        # 优先使用常见中文字体，避免中文标题和图例显示为方框。
+        plt.rcParams['font.sans-serif'] = [
+            'Microsoft YaHei', 'SimHei', 'Noto Sans CJK SC', 'DejaVu Sans'
+        ]
+        plt.rcParams['axes.unicode_minus'] = False
         plt.rcParams['axes.facecolor'] = self.COLOR_BG
         plt.rcParams['figure.facecolor'] = 'white'
 
