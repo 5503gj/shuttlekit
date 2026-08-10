@@ -1,0 +1,11 @@
+{
+  "pages": ["pages/index/index"],
+  "window": {
+    "navigationBarTitleText": "ShuttleKit 球速",
+    "navigationBarBackgroundColor": "#123d2d",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f7f3"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}
