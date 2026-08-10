@@ -46,7 +46,35 @@ async function simulateShot(targetSpeed) {
   const pxPerMeter = Number($("pxPerMeter").value) || 50, interval = 80, distance = targetSpeed / 3.6 * pxPerMeter * interval / 1000, start = performance.now() / 1000;
   for (let i = 0; i < 8; i++) { sendPoint(i * distance, 180 + Math.sin(i * .8) * 12, start + i * interval / 1000); await new Promise((resolve) => setTimeout(resolve, 45)); }
 }
+function renderVideoReport(report) {
+  $("videoResult").classList.remove("hidden");
+  $("videoShotType").textContent = report.shot_type || "数据不足";
+  $("videoConfidence").textContent = `置信度 ${Math.round(Number(report.shot_confidence || 0) * 100)}%`;
+  $("videoPeak").textContent = `${Number(report.peak_speed_kmh || 0).toFixed(1)} km/h`;
+  $("videoAverage").textContent = `${Number(report.average_speed_kmh || 0).toFixed(1)} km/h`;
+  const court = report.court || {};
+  $("videoCourtSize").textContent = `${court.length_m || 0} × ${court.width_m || 0} m（${court.court_type || "未知"}）`;
+  $("videoDetectionRate").textContent = `${Math.round(Number(report.detection_rate || 0) * 100)}%`;
+  $("videoCalibration").textContent = `${court.px_per_meter || 0} px/m · ${court.source === "court-lines" ? "场地线" : "画面估计"}`;
+  const warnings = $("videoWarnings"); warnings.innerHTML = "";
+  (report.warnings || []).forEach((warning) => { const item = document.createElement("li"); item.textContent = warning; warnings.appendChild(item); });
+  state.history = (report.speed_curve || []).map(Number).slice(-30); drawChart();
+}
+async function analyzeVideo() {
+  const file = $("videoFile").files[0];
+  if (!file) return alert("请先选择一段视频");
+  const button = $("analyzeVideoBtn"); button.disabled = true; $("videoStatus").textContent = `正在分析 ${file.name}…`;
+  const form = new FormData(); form.append("file", file);
+  try {
+    const response = await fetch("/api/video/analyze", { method: "POST", body: form });
+    const payload = await response.json(); if (!response.ok) throw new Error(payload.detail || "视频分析失败");
+    renderVideoReport(payload); $("videoStatus").textContent = `分析完成 · ${payload.total_frames} 帧 · ${payload.duration_s}s`;
+  } catch (error) { $("videoStatus").textContent = error.message; alert(error.message); }
+  finally { button.disabled = false; }
+}
 $("createBtn").addEventListener("click", createSession);
 $("resetBtn").addEventListener("click", () => { if (state.socket?.readyState === WebSocket.OPEN) state.socket.send(JSON.stringify({ type: "reset" })); state.history = []; });
 document.querySelectorAll(".shot-button").forEach((button) => button.addEventListener("click", () => simulateShot(Number(button.dataset.speed))));
+$("videoFile").addEventListener("change", () => { const file = $("videoFile").files[0]; $("videoStatus").textContent = file ? `${file.name} · 准备上传` : "尚未选择视频"; });
+$("analyzeVideoBtn").addEventListener("click", analyzeVideo);
 window.addEventListener("resize", drawChart); drawChart();
