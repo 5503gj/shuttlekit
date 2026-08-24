@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field
 from shuttle_speed.realtime import SpeedSessionStore
 from shuttle_speed.video_speed import VideoSpeedAnalyzer
 from equipment_kb.recommender import EquipmentRecommender, UserProfile
+from agent.coach import run_coach
 
 
 class SessionCreate(BaseModel):
@@ -39,6 +40,12 @@ class EquipmentRecommendPayload(BaseModel):
     play_style: str = Field(default="全面", min_length=1, max_length=30)
     gender: str = Field(default="不限", min_length=1, max_length=10)
     top_k: int = Field(default=5, ge=1, le=10)
+
+
+class CoachPayload(BaseModel):
+    message: str = Field(min_length=1, max_length=500)
+    profile: dict = Field(default_factory=dict)
+    session: dict = Field(default_factory=dict)
 
 
 app = FastAPI(title="ShuttleKit Speed API", version="0.2.0")
@@ -133,6 +140,12 @@ def equipment_recommend(payload: EquipmentRecommendPayload) -> dict:
         "results": [{"score": round(match.score, 1), "reasons": match.reasons,
                       "item": _equipment_item_view(match.item)} for match in matches],
     }
+
+
+@app.post("/api/agent/coach")
+def coach(payload: CoachPayload) -> dict:
+    """Run the inspectable local training/equipment Agent workflow."""
+    return run_coach(payload.message, payload.profile, payload.session)
 
 
 @app.post("/api/video/analyze")

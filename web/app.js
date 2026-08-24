@@ -103,6 +103,19 @@ async function recommendEquipment() {
   const button = $("recommendEquipmentBtn"); button.disabled = true; $("equipmentResults").innerHTML = '<div class="history-empty">正在匹配装备…</div>';
   try { const response = await fetch("/api/equipment/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || "推荐失败"); renderEquipmentResults(data); } catch (error) { $("equipmentResults").innerHTML = `<div class="history-empty">${error.message}</div>`; } finally { button.disabled = false; }
 }
+async function askCoach() {
+  const message = $("coachMessage").value.trim();
+  if (!message) return alert("请先输入问题");
+  const button = $("coachBtn"); button.disabled = true; $("coachResult").textContent = "Agent 正在识别意图并调用本地工具…";
+  const profile = { category: $("equipmentCategory").value, level: $("equipmentLevel").value, budget: Number($("equipmentBudget").value), play_style: $("equipmentStyle").value, gender: "不限" };
+  try {
+    const response = await fetch("/api/agent/coach", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message, profile, session: { peak_speed_kmh: Number($("peakSpeed").textContent), average_speed_kmh: Number($("averageSpeed").textContent), sample_count: Number($("sampleCount").textContent) } }) });
+    const data = await response.json(); if (!response.ok) throw new Error(data.detail || "教练请求失败");
+    $("coachResult").textContent = data.answer;
+    $("coachTrace").textContent = `Trace：${data.trace_id} · 意图 ${data.intent} · 工具 ${data.tool}`;
+  } catch (error) { $("coachResult").textContent = error.message; $("coachTrace").textContent = "Trace：执行失败"; }
+  finally { button.disabled = false; }
+}
 async function loadEquipmentStats() { try { const response = await fetch("/api/equipment/stats"); const data = await response.json(); $("equipmentStats").textContent = `${data.total} 款样本 · 非实时爬取`; } catch (error) { $("equipmentStats").textContent = "装备库离线"; } }
 $("createBtn").addEventListener("click", createSession);
 $("resetBtn").addEventListener("click", () => { if (state.socket?.readyState === WebSocket.OPEN) state.socket.send(JSON.stringify({ type: "reset" })); state.history = []; });
@@ -111,4 +124,6 @@ $("videoFile").addEventListener("change", () => { const file = $("videoFile").fi
 $("analyzeVideoBtn").addEventListener("click", analyzeVideo);
 $("shareVideoBtn").addEventListener("click", shareVideoResult);
 $("recommendEquipmentBtn").addEventListener("click", recommendEquipment);
+$("coachBtn").addEventListener("click", askCoach);
+$("coachMessage").addEventListener("keydown", (event) => { if (event.key === "Enter") askCoach(); });
 window.addEventListener("resize", drawChart); drawChart(); renderVideoHistory(); loadEquipmentStats();

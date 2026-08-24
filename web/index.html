@@ -100,6 +100,14 @@
           </div>
           <div id="equipmentResults" class="equipment-results"><div class="history-empty">填写画像后生成推荐。</div></div>
         </article>
+
+        <article class="panel coach-panel">
+          <div class="panel-heading"><div><p class="eyebrow">07 / TRAINING AGENT</p><h3>ShuttleKit 训练教练</h3></div><span class="demo-tag">本地工作流</span></div>
+          <p class="panel-note">用自然语言询问装备或训练数据。Agent 会先识别意图，再调用本地装备库或当前会话摘要工具；没有数据库也能完整演示。</p>
+          <div class="coach-row"><input id="coachMessage" placeholder="例如：我预算 800 元，偏进攻，推荐一把球拍" /><button id="coachBtn" class="button button-primary">询问教练</button></div>
+          <div id="coachResult" class="coach-result">等待你的问题。</div>
+          <div id="coachTrace" class="coach-trace">Trace：尚未执行</div>
+        </article>
       </section>
 
       <footer class="footer"><span>ShuttleKit · 羽毛球场馆数字化工具箱</span><span id="lastUpdate">等待连接</span></footer>

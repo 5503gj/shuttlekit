@@ -233,6 +233,16 @@ python speed_api.py
 
 当前 MVP 使用进程内存保存会话，适合本地演示和单球馆验证；面向真实球馆部署时，还需要接入数据库、账号权限、设备管理、HTTPS/WSS、异常告警和多租户隔离。
 
+### 训练教练 Agent
+
+实时大屏还提供一个 `/api/agent/coach` 入口：
+
+```text
+自然语言问题 → 意图识别 → 装备库/会话摘要工具 → 保守建议 → 返回 trace
+```
+
+当前 Agent 不依赖数据库或外部模型。装备问题调用结构化装备库，训练问题读取当前会话摘要，无法判断时先澄清目标。接口返回 `trace_id`、意图、工具和 guardrails，方便后续接入 LLM Planner 或更多训练工具。
+
 ### 装备库与合规数据接入
 
 网站和微信小程序现在共用装备接口：`GET /api/equipment/stats`、`GET /api/equipment/catalog`、`POST /api/equipment/recommend`。推荐结果会返回匹配理由和来源字段。
