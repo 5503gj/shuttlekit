@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict'),path=require('path'),net=require('net');const{spawn}=require('child_process');const{chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+(async()=>{const sock=net.createServer();await new Promise(r=>sock.listen(0,'127.0.0.1',r));const port=sock.address().port;await new Promise(r=>sock.close(r));
+const processServer=spawn('python',['-u','speed_api.py'],{cwd:path.resolve(__dirname,'..'),env:{...process.env,PORT:String(port),HOST:'127.0.0.1'},stdio:'ignore'});let browser;
+try{for(let i=0;i<100;i++){try{if((await fetch(`http://127.0.0.1:${port}/api/health`)).ok)break}catch{}await new Promise(r=>setTimeout(r,50));}
+browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.goto(`http://127.0.0.1:${port}/`);await page.locator('#createBtn').click();await page.waitForFunction(()=>state.socket?.readyState===1);
+await page.locator('.shot-button').first().click();await page.waitForFunction(()=>Number(document.querySelector('#currentSpeed').textContent)>0);await page.waitForFunction(()=>!state.simulating);
+const link=await page.evaluate(()=>location.origin+'/?session='+state.sessionId+'#read='+state.readToken);const display=await browser.newPage();display.on('pageerror',e=>errors.push(e.message));await display.goto(link);await display.waitForFunction(()=>state.readOnly===true);assert.ok(await display.locator('#resetBtn').isDisabled());
+await page.locator('.shot-button').first().click();await display.waitForFunction(()=>Number(document.querySelector('#currentSpeed').textContent)>0);await page.waitForFunction(()=>!state.simulating);
+await page.locator('#recommendEquipmentBtn').click();await page.waitForFunction(()=>document.querySelectorAll('.equipment-card').length>0);assert.deepEqual(errors,[]);console.log('Browser smoke passed: session auth, repeated simulation, readonly join, broadcast and recommendation.');
+}finally{if(browser)await browser.close();processServer.kill()}})().catch(e=>{console.error(e);process.exitCode=1});

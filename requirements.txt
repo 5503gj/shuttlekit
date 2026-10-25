@@ -1,17 +1,3 @@
-# ShuttleKit 依赖清单
-# 核心依赖（灯光/场地/统计/器材 模块）
-opencv-python>=4.8.0
-numpy>=1.24.0
-matplotlib>=3.7.0
-Pillow>=10.0.0
-gradio>=4.44,<6
-fastapi>=0.110
-uvicorn[standard]>=0.29
-python-multipart>=0.0.9
-
-# 球速检测模块（可选，按需安装）
-# ultralytics>=8.1.0
-# torch>=2.0.0
-
-# 测试
-pytest>=7.0.0
+-r requirements-core.txt
+gradio==6.30.0
+# Optional provider SDK: pip install openai; optional model weights are not downloaded.

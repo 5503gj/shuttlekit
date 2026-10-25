@@ -118,7 +118,7 @@ def recommend_equipment(level: str, budget: float, play_style: str, gender: str)
         return f"推荐失败：{exc}"
 
 
-with gr.Blocks(css=STYLE, title="ShuttleKit 羽毛球工具箱") as demo:
+with gr.Blocks(**({"css":STYLE} if int(gr.__version__.split(".")[0])<6 else {}), title="ShuttleKit 羽毛球工具箱") as demo:
     with gr.Column(elem_classes="shuttle-shell"):
         gr.Markdown(
             "# ShuttleKit\n"
@@ -183,8 +183,12 @@ with gr.Blocks(css=STYLE, title="ShuttleKit 羽毛球工具箱") as demo:
 
 
 if __name__ == "__main__":
+    if os.getenv("HOST","127.0.0.1") not in {"127.0.0.1","localhost","::1"}:
+        raise ValueError("此Gradio演示入口仅支持本机；对外服务使用带访问控制的speed_api")
     demo.launch(
         server_name=os.getenv("HOST", "127.0.0.1"),
         server_port=int(os.getenv("PORT", "7861")),
-        show_error=True,
+        show_error=False,
+        max_file_size="10mb",
+        **({"css":STYLE} if int(gr.__version__.split(".")[0])>=6 else {}),
     )

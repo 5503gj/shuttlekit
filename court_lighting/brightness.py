@@ -1,13 +1,4 @@
-"""
-场馆灯光评估 - 核心模块
-功能：分析场馆照片的亮度、均匀度、眩光，判断是否达到 BWF 标准
-
-BWF 照度参考标准：
-  - 国际比赛: 500 lux 以上
-  - 一般比赛: 300-500 lux
-  - 训练/休闲: 200-300 lux
-  - 亮度不均匀度应 < 0.6（均匀度 > 0.4）
-"""
+"""照片曝光/高亮区域分析，不将灰度值换算lux或判定照度合规。"""
 
 import cv2
 import numpy as np
@@ -48,9 +39,9 @@ class BrightnessAnalyzer:
     """场馆亮度分析器"""
 
     # 亮度阈值（0-255 灰度空间）
-    LUX_MIN_MATCH = 180     # 对应约 500 lux（国际赛）
-    LUX_MIN_NORMAL = 120    # 对应约 300 lux（一般比赛）
-    LUX_MIN_TRAIN = 80      # 对应约 200 lux（训练）
+    BRIGHT_IMAGE = 180
+    MID_IMAGE = 120
+    DARK_IMAGE = 80
     GLARE_THRESHOLD = 240  # 眩光阈值
     UNIFORMITY_MIN = 0.5    # 均匀度最低要求
 
@@ -75,6 +66,8 @@ class BrightnessAnalyzer:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         if roi:
             x, y, w, h = roi
+            if min(x,y)<0 or min(w,h)<=0 or x+w>gray.shape[1] or y+h>gray.shape[0]:
+                raise ValueError("ROI超出图片范围")
             gray = gray[y:y+h, x:x+w]
 
         # 1. 平均亮度
@@ -156,17 +149,8 @@ class BrightnessAnalyzer:
         """综合评估，生成结论和建议"""
         suggestions = []
 
-        # 亮度等级
-        if mean >= self.LUX_MIN_MATCH:
-            level = "国际比赛标准"
-        elif mean >= self.LUX_MIN_NORMAL:
-            level = "一般比赛标准"
-        elif mean >= self.LUX_MIN_TRAIN:
-            level = "训练/休闲标准"
-        else:
-            level = "偏暗，未达训练标准"
-            suggestions.append("建议增加照明灯具数量或更换高功率灯泡")
-
+        if mean < self.DARK_IMAGE:
+            suggestions.append("画面偏暗；请检查曝光，使用照度计才能判断实际照明")
         # 均匀度
         if uniformity < self.UNIFORMITY_MIN:
             suggestions.append(f"亮度均匀度({uniformity:.2f})偏低，建议调整灯具角度或加装漫射罩")
@@ -177,11 +161,7 @@ class BrightnessAnalyzer:
         elif glare_ratio > 0.01:
             suggestions.append("存在轻微眩光，建议关注灯具直射方向")
 
-        # 最终结论
-        if not suggestions:
-            conclusion = f"达标（{level}），灯光条件适合羽毛球运动"
-        else:
-            conclusion = f"基本达标（{level}），但有改进空间"
+        conclusion = "仅图像曝光分析；照度与BWF合规未测量"
 
         return conclusion, suggestions
 

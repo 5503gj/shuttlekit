@@ -36,14 +36,14 @@ class TestSpeedCalculator:
         """边界场景：空轨迹"""
         calc = SpeedCalculator()
         report = calc.calculate([])
-        assert report.max_speed_kmh == 0
-        assert report.avg_speed_kmh == 0
+        assert report.max_speed_kmh is None
+        assert report.avg_speed_kmh is None
 
     def test_single_point(self):
         """边界场景：单点轨迹（无法计算速度）"""
         calc = SpeedCalculator()
         report = calc.calculate([(100, 100)])
-        assert report.max_speed_kmh == 0
+        assert report.max_speed_kmh is None
 
     def test_stationary_object(self):
         """边界场景：静止目标"""

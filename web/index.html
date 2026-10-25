@@ -6,7 +6,7 @@
     <title>ShuttleKit · 球馆实时球速</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
+  <body><div style="padding:12px 24px"><label>管理员访问令牌（公网创建/视频需要） <input id="adminToken" type="password" autocomplete="off" /></label> <button id="copyReadLink" type="button">复制只读大屏链接</button><span>本机为演示模式；比例须人工确认，模拟击球不代表测量精度。</span></div>
     <main class="shell">
       <header class="topbar">
         <div>
@@ -73,10 +73,10 @@
         <article class="panel video-panel">
           <div class="panel-heading"><div><p class="eyebrow">04 / VIDEO ANALYSIS</p><h3>上传视频检测球速</h3></div><span class="demo-tag">短视频 MVP</span></div>
           <p class="panel-note">上传固定机位的 MP4 / MOV / AVI 视频。系统会根据场地线估计单双打尺寸，再追踪画面中移动的羽毛球候选点，并判断是否疑似杀球。</p>
-          <div class="video-upload-row"><label class="file-picker">选择视频<input id="videoFile" type="file" accept="video/mp4,video/quicktime,video/avi,video/webm,.mkv" /></label><button id="analyzeVideoBtn" class="button button-primary">开始检测</button><span id="videoStatus" class="session-label">尚未选择视频</span></div>
+          <label>视频比例（实际测量px/m，留空仅px/s）<input id="videoScale" type="number" min="0.001" step="any" /></label><div class="video-upload-row"><label class="file-picker">选择视频<input id="videoFile" type="file" accept="video/mp4,video/quicktime,video/avi,video/webm,.mkv" /></label><button id="analyzeVideoBtn" class="button button-primary">开始检测</button><span id="videoStatus" class="session-label">尚未选择视频</span></div>
           <div id="videoResult" class="video-result hidden">
             <div class="video-result-main"><span>判断结果</span><strong id="videoShotType">—</strong><small id="videoConfidence">置信度 —</small></div>
-            <div class="video-result-grid"><div><span>峰值球速</span><b id="videoPeak">0.0 km/h</b></div><div><span>平均球速</span><b id="videoAverage">0.0 km/h</b></div><div><span>扣杀角度</span><b id="videoAngle">—</b></div><div><span>场地尺寸</span><b id="videoCourtSize">—</b></div><div><span>有效检测率</span><b id="videoDetectionRate">—</b></div><div><span>像素标定</span><b id="videoCalibration">—</b></div></div>
+            <div class="video-result-grid"><div><span>峰值球速</span><b id="videoPeak">0.0 km/h</b></div><div><span>平均球速</span><b id="videoAverage">0.0 km/h</b></div><div><span>画面轨迹角</span><b id="videoAngle">—</b></div><div><span>场地尺寸</span><b id="videoCourtSize">—</b></div><div><span>有效检测率</span><b id="videoDetectionRate">—</b></div><div><span>像素标定</span><b id="videoCalibration">—</b></div></div>
             <div class="video-result-actions"><button id="shareVideoBtn" class="button button-quiet">生成成绩分享卡</button><span class="session-label">结果默认只保存在本机浏览器</span></div>
             <ul id="videoWarnings" class="video-warnings"></ul>
           </div>

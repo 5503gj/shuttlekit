@@ -6,12 +6,12 @@ Page({
   onVenueInput(e) { this.setData({ venueId: e.detail.value }); },
   onCourtInput(e) { this.setData({ courtId: e.detail.value }); },
   connectSession() {
-    wx.request({ url: `${app.globalData.apiBaseUrl}/api/sessions`, method: 'POST', data: { venue_id: this.data.venueId, court_id: this.data.courtId, fps: 60, px_per_meter: 50 }, success: (res) => { this.sessionId = res.data.session_id; this.openSocket(); }, fail: () => this.setData({ statusText: '接口连接失败，请确认 Python 服务已启动' }) });
+    wx.request({ url: `${app.globalData.apiBaseUrl}/api/sessions`, method: 'POST', data: { venue_id: this.data.venueId, court_id: this.data.courtId, fps: 60, px_per_meter: 50 }, header: app.globalData.adminToken ? {Authorization:'Bearer '+app.globalData.adminToken}:{}, success: (res) => { if(res.statusCode!==200){this.setData({statusText:'创建失败：检查权限/参数'});return;} this.token=res.data.write_token; this.readToken=res.data.read_token;this.sessionId = res.data.session_id; this.openSocket(); }, fail: () => this.setData({ statusText: '接口连接失败，请确认 Python 服务已启动' }) });
   },
   openSocket() {
     if (this.socketTask) this.socketTask.close();
     this.socketTask = wx.connectSocket({ url: `${app.globalData.wsBaseUrl}/ws/sessions/${this.sessionId}` });
-    this.socketTask.onOpen(() => this.setData({ connected: true, statusText: `已连接 ${this.data.courtId}` }));
+    this.socketTask.onOpen(() => {this.socketTask.send({data:JSON.stringify({type:'auth',token:this.token})});this.setData({ connected: true, statusText: `已连接 ${this.data.courtId}（演示/人工标定）` });});
     this.socketTask.onClose(() => this.setData({ connected: false, statusText: '连接已断开' }));
     this.socketTask.onMessage((event) => { const data = JSON.parse(event.data); if (!data.error) this.renderState(data); });
   },

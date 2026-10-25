@@ -1,11 +1,12 @@
-const state = { sessionId: null, socket: null, history: [] };
+const state = { sessionId: null, socket: null, history: [], token:null, readToken:null, readOnly:false };
 const $ = (id) => document.getElementById(id);
 
 function setBadge(text, online) { const badge = $("connectionBadge"); badge.textContent = text; badge.className = `badge ${online ? "badge-online" : "badge-offline"}`; }
 function render(data) {
-  $("currentSpeed").textContent = Number(data.current_speed_kmh || 0).toFixed(1);
-  $("peakSpeed").textContent = Number(data.peak_speed_kmh || 0).toFixed(1);
-  $("averageSpeed").textContent = Number(data.average_speed_kmh || 0).toFixed(1);
+  if(data.quality==="reset")state.history=[];
+  $("currentSpeed").textContent = data.current_speed_kmh == null ? '—' : Number(data.current_speed_kmh).toFixed(1);
+  $("peakSpeed").textContent = data.peak_speed_kmh == null ? '—' : Number(data.peak_speed_kmh).toFixed(1);
+  $("averageSpeed").textContent = data.average_speed_kmh == null ? '—' : Number(data.average_speed_kmh).toFixed(1);
   $("sampleCount").textContent = data.sample_count || 0;
   $("qualityLabel").textContent = data.quality === "outlier" ? "已过滤异常点" : data.status === "tracking" ? "追踪中" : "等待数据";
   $("lastUpdate").textContent = `最后更新 ${new Date().toLocaleTimeString()}`;
@@ -24,39 +25,44 @@ function drawChart() {
 }
 function closeSocket() { if (state.socket) { state.socket.close(); state.socket = null; } }
 function connect(session) {
-  closeSocket(); state.history = []; state.sessionId = session.session_id;
+  closeSocket(); state.history = []; state.sessionId = session.session_id; state.token=session.write_token||session.read_token;state.readToken=session.read_token;state.readOnly=!session.write_token;
   const protocol = location.protocol === "https:" ? "wss" : "ws";
   state.socket = new WebSocket(`${protocol}://${location.host}/ws/sessions/${state.sessionId}`);
-  state.socket.onopen = () => setBadge("实时已连接", true);
+  state.socket.onopen = () => { state.socket.send(JSON.stringify({type:"auth",token:state.token}));setBadge(state.readOnly?"只读显示已连接":"采集端已连接",true); };
   state.socket.onclose = () => setBadge("连接已断开", false);
   state.socket.onerror = () => setBadge("连接异常", false);
   state.socket.onmessage = (event) => { const data = JSON.parse(event.data); if (!data.error) render(data); };
   $("sessionLabel").textContent = `${session.venue_id} / ${session.court_id} · ${session.session_id}`;
-  $("resetBtn").disabled = false; render(session);
+  $("resetBtn").disabled = state.readOnly; document.querySelectorAll(".shot-button").forEach(b=>b.disabled=state.readOnly); render(session);
 }
 async function createSession() {
   const body = { venue_id: $("venueId").value.trim(), court_id: $("courtId").value.trim(), fps: Number($("fps").value), px_per_meter: Number($("pxPerMeter").value) };
   if (!body.venue_id || !body.court_id) return alert("请填写球馆 ID 和场地 ID");
-  const response = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const response = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json",...adminHeaders() }, body: JSON.stringify(body) });
   if (!response.ok) return alert("创建会话失败，请检查参数"); connect(await response.json());
 }
-function sendPoint(x, y, timestamp) { if (!state.socket || state.socket.readyState !== WebSocket.OPEN) return alert("请先创建并连接实时会话"); state.socket.send(JSON.stringify({ type: "point", x, y, timestamp })); }
+function sendPoint(x, y, timestamp) { if(state.readOnly)return; if (!state.socket || state.socket.readyState !== WebSocket.OPEN) return alert("请先创建并连接实时会话"); state.socket.send(JSON.stringify({ type: "point", x, y, timestamp })); }
 async function simulateShot(targetSpeed) {
-  if (!state.sessionId) return alert("请先创建实时会话");
+  if (!state.sessionId || state.readOnly || state.simulating) return;
+  const sessionId=state.sessionId;state.simulating=true;
+  try {
+  const reset=await fetch('/api/sessions/'+sessionId+'/reset',{method:'POST',headers:{Authorization:'Bearer '+state.token}});
+  if(!reset.ok)throw new Error('重置失败，请重新连接');
   const pxPerMeter = Number($("pxPerMeter").value) || 50, interval = 80, distance = targetSpeed / 3.6 * pxPerMeter * interval / 1000, start = performance.now() / 1000;
-  for (let i = 0; i < 8; i++) { sendPoint(i * distance, 180 + Math.sin(i * .8) * 12, start + i * interval / 1000); await new Promise((resolve) => setTimeout(resolve, 45)); }
+  for (let i = 0; i < 8; i++) { if(state.sessionId!==sessionId)return;sendPoint(i * distance, 180 + Math.sin(i * .8) * 12, start + i * interval / 1000); await new Promise((resolve) => setTimeout(resolve, 80)); }
+  }catch(error){alert(error.message)}finally{state.simulating=false}
 }
 function renderVideoReport(report) {
   $("videoResult").classList.remove("hidden");
   $("videoShotType").textContent = report.shot_type || "数据不足";
-  $("videoConfidence").textContent = `置信度 ${Math.round(Number(report.shot_confidence || 0) * 100)}%`;
-  $("videoPeak").textContent = `${Number(report.peak_speed_kmh || 0).toFixed(1)} km/h`;
-  $("videoAverage").textContent = `${Number(report.average_speed_kmh || 0).toFixed(1)} km/h`;
-  $("videoAngle").textContent = `${Number(report.smash_angle_deg || 0).toFixed(1)}°`;
+  $("videoConfidence").textContent = "阈值参考，非校准概率";
+  $("videoPeak").textContent = report.peak_speed_kmh == null ? (report.peak_speed_px_s == null ? '数据不足' : `${Number(report.peak_speed_px_s).toFixed(1)} px/s`) : `${Number(report.peak_speed_kmh).toFixed(1)} km/h`;
+  $("videoAverage").textContent = report.average_speed_kmh == null ? '未标定/数据不足' : `${Number(report.average_speed_kmh).toFixed(1)} km/h`;
+  $("videoAngle").textContent = report.trajectory_angle_deg == null ? '数据不足' : `${Number(report.trajectory_angle_deg).toFixed(1)}°（画面）`;
   const court = report.court || {};
-  $("videoCourtSize").textContent = `${court.length_m || 0} × ${court.width_m || 0} m（${court.court_type || "未知"}）`;
+  $("videoCourtSize").textContent = "实际场地尺寸未测量";
   $("videoDetectionRate").textContent = `${Math.round(Number(report.detection_rate || 0) * 100)}%`;
-  $("videoCalibration").textContent = `${court.px_per_meter || 0} px/m · ${court.source === "court-lines" ? "场地线" : "画面估计"}`;
+  $("videoCalibration").textContent = court.px_per_meter == null ? '未标定，仅px/s' : `${court.px_per_meter} px/m · 人工输入（2D投影估计）`;
   const warnings = $("videoWarnings"); warnings.innerHTML = "";
   (report.warnings || []).forEach((warning) => { const item = document.createElement("li"); item.textContent = warning; warnings.appendChild(item); });
   state.history = (report.speed_curve || []).map(Number).slice(-30); drawChart();
@@ -64,7 +70,7 @@ function renderVideoReport(report) {
 }
 function loadVideoHistory() { try { return JSON.parse(localStorage.getItem("shuttlekit.videoHistory") || "[]"); } catch (error) { return []; } }
 function saveVideoHistory(report) {
-  const records = loadVideoHistory(); records.unshift({ at: new Date().toISOString(), name: report.video_name, shot: report.shot_type, peak: Number(report.peak_speed_kmh || 0), average: Number(report.average_speed_kmh || 0), angle: Number(report.smash_angle_deg || 0) });
+  if(report.peak_speed_kmh == null)return; const records = loadVideoHistory(); records.unshift({ at: new Date().toISOString(), name: report.video_name, shot: report.shot_type, peak: Number(report.peak_speed_kmh || 0), average: Number(report.average_speed_kmh || 0), angle: Number(report.smash_angle_deg || 0) });
   localStorage.setItem("shuttlekit.videoHistory", JSON.stringify(records.slice(0, 20))); renderVideoHistory();
 }
 function renderVideoHistory() {
@@ -84,9 +90,9 @@ async function analyzeVideo() {
   const file = $("videoFile").files[0];
   if (!file) return alert("请先选择一段视频");
   const button = $("analyzeVideoBtn"); button.disabled = true; $("videoStatus").textContent = `正在分析 ${file.name}…`;
-  const form = new FormData(); form.append("file", file);
+  const form = new FormData(); form.append("file", file); const scale=$("videoScale").value;if(scale)form.append("px_per_meter",scale);
   try {
-    const response = await fetch("/api/video/analyze", { method: "POST", body: form });
+    const response = await fetch("/api/video/analyze", { method: "POST", headers:adminHeaders(), body: form });
     const payload = await response.json(); if (!response.ok) throw new Error(payload.detail || "视频分析失败");
     renderVideoReport(payload); $("videoStatus").textContent = `分析完成 · ${payload.total_frames} 帧 · ${payload.duration_s}s`;
   } catch (error) { $("videoStatus").textContent = error.message; alert(error.message); }
@@ -112,3 +118,16 @@ $("analyzeVideoBtn").addEventListener("click", analyzeVideo);
 $("shareVideoBtn").addEventListener("click", shareVideoResult);
 $("recommendEquipmentBtn").addEventListener("click", recommendEquipment);
 window.addEventListener("resize", drawChart); drawChart(); renderVideoHistory(); loadEquipmentStats();
+
+function adminHeaders(){const token=$("adminToken").value.trim();return token?{Authorization:'Bearer '+token}:{};}
+$("copyReadLink").onclick=async()=>{
+ if(!state.sessionId)return alert('请先创建会话');
+ const link=new URL(location.href);link.search='?session='+encodeURIComponent(state.sessionId);link.hash='read='+encodeURIComponent(state.readToken);
+ try{await navigator.clipboard.writeText(link.href);alert('只读显示链接已复制；持链接者可查看该会话。')}catch{prompt('复制只读显示链接',link.href)}
+};
+(async()=>{
+ const id=new URLSearchParams(location.search).get('session'),read=new URLSearchParams(location.hash.slice(1)).get('read');
+ if(!id||!read)return;history.replaceState(null,'',location.pathname);
+ const response=await fetch('/api/sessions/'+encodeURIComponent(id),{headers:{Authorization:'Bearer '+read}});
+ if(!response.ok)return setBadge('会话已失效或无权限',false);connect({...await response.json(),read_token:read});
+})();

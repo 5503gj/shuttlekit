@@ -18,7 +18,7 @@ if [ -f "$MODELS_DIR/yolov8n.pt" ]; then
     echo "  已存在，跳过"
 else
     # 首次运行 ultralytics 会自动下载，这里不手动下载
-    echo "  首次运行 python -m shuttle_speed.track 时自动下载"
+    echo "  请人工下载、校验并显式传入 model_path；本工具不会自动下载"
     echo "  或手动访问: https://github.com/ultralytics/assets/releases"
 fi
 
@@ -30,10 +30,10 @@ echo "  - https://github.com/yastrebksv/TrackNet"
 echo "  - https://gitlab.nol.cs.nycu.edu.tw/open-source/TrackNet"
 echo "  下载后放到: $MODELS_DIR/tracknet.pth"
 echo ""
-echo "  注意: TrackNet 需要 GPU + PyTorch 环境"
+echo "  注意: 当前TrackNet推理未实现，放入权重不会启用该功能"
 
 echo ""
 echo "=========================================="
-echo "  下载完成"
+echo "  说明结束（没有下载任何权重）"
 echo "  简单模块（灯光/场地/统计/器材）无需模型即可使用"
 echo "=========================================="

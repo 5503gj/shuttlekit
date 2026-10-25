@@ -57,20 +57,31 @@ def recommend_with_llm(profile: UserProfile, api_key: str = None, base_url: str 
     if not api_key:
         return None
 
-    client = OpenAI(api_key=api_key, base_url=base_url) if base_url else OpenAI(api_key=api_key)
-
     rec = EquipmentRecommender()
-    context = rec.to_prompt_context(profile.category)
-
-    resp = client.chat.completions.create(
-        model=os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": build_user_message(profile, context)},
-        ],
-        temperature=0.7,
-    )
-    return resp.choices[0].message.content
+    matches = rec.recommend(profile, top_k=3)
+    if not matches:return None
+    allowed = {str(m.item['id']):m.item for m in matches}
+    try:
+        client = OpenAI(api_key=api_key,base_url=base_url,timeout=8,max_retries=0)
+        response = client.chat.completions.create(
+            model=os.environ.get("OPENAI_MODEL","gpt-4o-mini"),
+            messages=[{"role":"system","content":SYSTEM_PROMPT+"返回JSON对象：recommendations数组，每项仅有id和reason。只能使用候选id，不能新增型号或价格。"},
+                      {"role":"user","content":build_user_message(profile,rec.to_prompt_context(profile,top_k=3))}],
+            temperature=.3,max_tokens=400,response_format={"type":"json_object"})
+        data=json.loads(response.choices[0].message.content)
+        rows=data.get('recommendations')
+        if not isinstance(rows,list) or not 1<=len(rows)<=3:return None
+        lines=[];seen=set()
+        for row in rows:
+            if not isinstance(row,dict) or str(row.get('id')) not in allowed or not isinstance(row.get('reason'),str):return None
+            identifier=str(row['id'])
+            if identifier in seen:return None
+            seen.add(identifier);item=allowed[identifier]
+            lines.append(f"{item.get('brand')} {item.get('model')} | {rec._price_str(item)} | {row['reason'][:300]}")
+        return "\n".join(lines)
+    except Exception:
+        # Never expose provider errors/credentials or mask a failed request as AI success.
+        return None
 
 
 def advise(profile: UserProfile) -> str:

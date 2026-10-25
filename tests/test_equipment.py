@@ -46,9 +46,7 @@ def test_recommend_budget_boundary():
     rec = EquipmentRecommender()
     p = UserProfile("racket", "入门", 0, "娱乐", "男")
     res = rec.recommend(p, top_k=3)
-    assert len(res) == 3
-    # 超预算的应有相应理由
-    assert any("超预算" in "、".join(r.reasons) for r in res)
+    assert res == []  # 硬预算0时不能推荐需要加钱的商品
 
 
 def test_recommend_shoe():

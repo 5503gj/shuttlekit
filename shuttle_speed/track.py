@@ -16,7 +16,7 @@ import csv
 import os
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
-from .speed_calc import SpeedCalculator, SpeedReport
+from .speed_calc import SpeedCalculator, SpeedReport, finite
 
 
 @dataclass
@@ -32,13 +32,18 @@ class TrackResult:
 class ShuttleTracker:
     """羽毛球追踪器"""
 
-    def __init__(self, fps: int = 30, method: str = "yolo"):
+    def __init__(self, fps: int = 30, method: str = "yolo", px_per_meter=None, model_path=None, class_ids=(32,), confidence=0.5):
         """
         Args:
             fps: 视频帧率
             method: 追踪方法 "yolo" | "manual" | "tracknet"
         """
-        self.fps = fps
+        self.fps = SpeedCalculator(fps, px_per_meter).fps
+        self.px_per_meter = px_per_meter
+        self.model_path = model_path
+        self.class_ids = set(class_ids)
+        self.confidence = finite(confidence, "confidence")
+        if not 0<=self.confidence<=1:raise ValueError("invalid confidence")
         self.method = method
         self._model = None
 
@@ -66,108 +71,51 @@ class ShuttleTracker:
         Returns:
             TrackResult 包含轨迹和速度
         """
+        if self.method == "tracknet":
+            raise NotImplementedError("TrackNet推理未实现，请使用手动CSV或显式配置YOLO")
+        if self.method != "yolo":
+            raise ValueError("自动追踪只支持显式配置的YOLO，手动轨迹请使用track_from_csv")
+        if not self.model_path or not os.path.isfile(self.model_path):
+            raise ValueError("请提供本地已验证YOLO权重；不会自动下载模型")
+        if not self._load_yolo_model(self.model_path):
+            raise RuntimeError("YOLO未安装或权重加载失败")
+        return self._track_with_yolo(video_path, output_path)
+
+    def _track_with_yolo(self, video_path, output_path):
         import cv2
+        cap=cv2.VideoCapture(video_path)
+        trajectory,frames=[],[]
+        try:
+            if not cap.isOpened():raise ValueError("无法读取视频")
+            fps=finite(cap.get(cv2.CAP_PROP_FPS),"video fps")
+            calc=SpeedCalculator(fps,self.px_per_meter)
+            index=0
+            while True:
+                ok,frame=cap.read()
+                if not ok:break
+                if index>=3600 or max(frame.shape[:2])>1920:raise ValueError("视频超出3600帧/1920像素限制")
+                result=self._model(frame,verbose=False)
+                candidates=[]
+                for box in result[0].boxes:
+                    if int(box.cls[0]) not in self.class_ids or float(box.conf[0])<self.confidence:continue
+                    x1,y1,x2,y2=box.xyxy[0].tolist()
+                    if x2>x1 and y2>y1:candidates.append(((x1+x2)/2,(y1+y2)/2))
+                if candidates:
+                    previous=trajectory[-1] if trajectory else candidates[0]
+                    point=min(candidates,key=lambda p:(p[0]-previous[0])**2+(p[1]-previous[1])**2)
+                    trajectory.append(point);frames.append(index)
+                index+=1
+        finally:cap.release()
+        report=calc.calculate(trajectory,frame_indices=frames)
+        return TrackResult(trajectory,index,len(trajectory),len(trajectory)/index if index else 0,report)
 
-        if self.method == "yolo" and self._load_yolo_model():
-            return self._track_with_yolo(video_path, output_path)
-        else:
-            print("回退到手动标注模式，请使用 track_from_csv")
-            return TrackResult(trajectory=[], total_frames=0, detected_frames=0,
-                             detection_rate=0.0)
-
-    def _track_with_yolo(self, video_path: str, output_path: Optional[str]) -> TrackResult:
-        """使用 YOLO 追踪"""
-        import cv2
-
-        cap = cv2.VideoCapture(video_path)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        trajectory = []
-        detected = 0
-        out = None
-
-        if output_path:
-            output_dir = os.path.dirname(output_path)
-            if output_dir:
-                os.makedirs(output_dir, exist_ok=True)
-            frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            video_fps = cap.get(cv2.CAP_PROP_FPS) or self.fps
-            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-            out = cv2.VideoWriter(output_path, fourcc, video_fps,
-                                  (frame_width, frame_height))
-
-        # YOLO 的 "sports ball" 类 (class 32) 可用于近似检测球
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-
-            results = self._model(frame, verbose=False)
-            # 找最小的检测框（羽毛球在画面中通常最小）
-            best_box = None
-            min_area = float('inf')
-
-            for box in results[0].boxes:
-                x1, y1, x2, y2 = box.xyxy[0].tolist()
-                area = (x2 - x1) * (y2 - y1)
-                if area < min_area:
-                    min_area = area
-                    best_box = (x1, y1, x2, y2)
-
-            if best_box:
-                cx = (best_box[0] + best_box[2]) / 2
-                cy = (best_box[1] + best_box[3]) / 2
-                trajectory.append((cx, cy))
-                detected += 1
-
-            if output_path:
-                # 绘制轨迹
-                for i in range(1, len(trajectory)):
-                    cv2.line(frame,
-                            (int(trajectory[i-1][0]), int(trajectory[i-1][1])),
-                            (int(trajectory[i][0]), int(trajectory[i][1])),
-                            (0, 255, 0), 2)
-                out.write(frame)
-
-        cap.release()
-        if out is not None:
-            out.release()
-
-        detection_rate = detected / total_frames if total_frames > 0 else 0
-
-        # 计算速度
-        calc = SpeedCalculator(fps=self.fps)
-        speed_report = calc.calculate(trajectory) if trajectory else None
-
-        return TrackResult(
-            trajectory=trajectory,
-            total_frames=total_frames,
-            detected_frames=detected,
-            detection_rate=detection_rate,
-            speed_report=speed_report,
-        )
-
-    def track_from_csv(self, csv_path: str) -> TrackResult:
-        """
-        从 CSV 文件读取轨迹数据（手动标注或其他工具导出）
-
-        CSV 格式: frame, x, y
-        """
-        trajectory = []
-        with open(csv_path, 'r') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                x = float(row['x'])
-                y = float(row['y'])
-                trajectory.append((x, y))
-
-        calc = SpeedCalculator(fps=self.fps)
-        speed_report = calc.calculate(trajectory) if trajectory else None
-
-        return TrackResult(
-            trajectory=trajectory,
-            total_frames=len(trajectory),
-            detected_frames=len(trajectory),
-            detection_rate=1.0,
-            speed_report=speed_report,
-        )
+    def track_from_csv(self,csv_path):
+        trajectory,frames=[],[]
+        with open(csv_path,encoding='utf-8-sig',newline='') as stream:
+            for row in csv.DictReader(stream):
+                frame=finite(row['frame'],"frame")
+                if frame<0 or not frame.is_integer():raise ValueError("frame必须为非负整数")
+                frames.append(int(frame));trajectory.append((finite(row['x'],"x"),finite(row['y'],"y")))
+        report=SpeedCalculator(self.fps,self.px_per_meter).calculate(trajectory,frame_indices=frames)
+        total=frames[-1]+1 if frames else 0
+        return TrackResult(trajectory,total,len(trajectory),len(trajectory)/total if total else 0,report)

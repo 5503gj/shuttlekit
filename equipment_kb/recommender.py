@@ -13,6 +13,7 @@
 - 容错：真实爬取的装备（intobadminton）价格/规格常为 null，所有用到数值的地方都做 None 保护。
 """
 
+import math
 import json
 import os
 from dataclasses import dataclass, field
@@ -99,12 +100,21 @@ class EquipmentRecommender:
         - profile 带 category -> 仅该类；category 为空/未知 -> 跨类（用于通用顾问）。
         """
         cat = getattr(profile, "category", None)
-        if cat:
-            items = self.get_by_category(cat)
-            if not items:            # 未知分类回退到全部，避免空结果
-                items = self.equipment
-        else:
-            items = self.equipment
+        budget = getattr(profile, "budget", None)
+        if isinstance(budget,bool) or not isinstance(budget,(int,float)) or not math.isfinite(budget) or budget<0:
+            raise ValueError("预算必须为非负有限数")
+        if cat is not None and cat not in {"racket","shoe","shuttlecock"}:
+            raise ValueError("未知装备类别")
+        if self._norm_level(profile.level) not in LEVEL_MAP:
+            raise ValueError("未知水平")
+        styles={"全面","进攻","速度","防守","双打前场","双打后场","比赛","训练","娱乐","控制","均衡","双打","单打","全能","前场快攻"}
+        if profile.play_style not in styles or profile.gender not in {"男","女","不限"}:
+            raise ValueError("未知打法或性别")
+        if isinstance(top_k,bool) or not isinstance(top_k,int) or not 1<=top_k<=20:
+            raise ValueError("top_k必须为1到20整数")
+        items = self.get_by_category(cat) if cat else self.equipment
+        # Never label an unaffordable/unknown price as a match to a hard budget.
+        items=[item for item in items if isinstance(item.get("price_min"),(int,float)) and item["price_min"]<=budget]
 
         scored = []
         for item in items:
@@ -142,16 +152,17 @@ class EquipmentRecommender:
         if pmin is not None and pmax is not None and budget is not None:
             if pmin <= budget <= pmax:
                 score += 30
-                reasons.append("价格在预算内")
+                reasons.append("价格区间与预算部分重叠，实际售价需确认")
             elif budget >= pmax:
                 score += 12
-                reasons.append("预算充足，可上探更高端")
+                reasons.append("标注价格区间在预算内，非实时售价")
             elif budget < pmin:
                 score -= 15
                 reasons.append("超预算，需加钱")
 
         # 3. 打法匹配
         pstyle = getattr(profile, "play_style", None) or ""
+        pstyle = {"全能":"全面","前场快攻":"双打前场"}.get(pstyle,pstyle)
         if pstyle and pstyle in (item.get("play_styles") or []):
             score += 25
             reasons.append(f"打法匹配（{pstyle}）")
@@ -216,8 +227,7 @@ class EquipmentRecommender:
         else:
             recs = self.recommend(profile, top_k=top_k)
             items = [r.item for r in recs]
-            if not items:
-                items = self.equipment
+
 
         ctx = "羽毛球装备库（结构化数据，含品牌/型号/价格/参数/打法/评分/评价）：\n"
         for e in items:

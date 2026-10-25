@@ -3,6 +3,7 @@
 功能：记录比赛得分、回合计数、击球类型，生成结构化数据
 """
 
+import math
 import csv
 import json
 from dataclasses import dataclass, field, asdict
@@ -67,6 +68,10 @@ class MatchRecorder:
     def add_point(self, server: str, winner: str, shot_type: str,
                   duration: float = 0.0) -> Point:
         """记录一次得分"""
+        if server not in {"A","B"} or winner not in {"A","B"} or shot_type not in self.SHOT_TYPES:
+            raise ValueError("发球方/得分方/击球类型无效")
+        if isinstance(duration,bool) or not isinstance(duration,(int,float)) or not math.isfinite(duration) or duration<0:
+            raise ValueError("回合时长须为非负有限数")
         self._current_rally += 1
         score_a = sum(1 for p in self.data.points if p.winner == "A") + (1 if winner == "A" else 0)
         score_b = sum(1 for p in self.data.points if p.winner == "B") + (1 if winner == "B" else 0)
