@@ -66,7 +66,7 @@
     cancel();const version=++generation;controller=new AbortController();const requestedSession=state.sessionId;
     byId('coachRun').disabled=true;byId('coachCancel').hidden=false;byId('coachStatus').textContent='正在读取会话窗口并核对数据…';
     try{
-      const response=await fetch(`/api/sessions/${encodeURIComponent(requestedSession)}/coach?goal=${encodeURIComponent(byId('coachGoal').value)}`,{headers:{Authorization:'Bearer '+state.token},signal:controller.signal});
+      const response=await apiRequest(`/api/sessions/${encodeURIComponent(requestedSession)}/coach?goal=${encodeURIComponent(byId('coachGoal').value)}`,{headers:{Authorization:'Bearer '+state.token},signal:controller.signal});
       if(!response.ok)throw new Error(response.status===403?'当前凭据无法读取此会话。':'会话不可用或参数无效，请重建后再试。');
       const data=await response.json();if(version!==generation||requestedSession!==state.sessionId)return;displayReport(data);
     }catch(error){if(version===generation)byId('coachStatus').textContent=error.name==='AbortError'?'复盘已取消，采集未更改。':error.message;}

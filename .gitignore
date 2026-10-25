@@ -41,3 +41,6 @@ output/
 Thumbs.db
 
 node_modules/
+
+dist/
+.runtime-cache/

@@ -16,3 +16,5 @@ description: "维护 ShuttleKit 训练复盘教练、轨迹回放、训练建议
 5. 验证用 python -m pytest -q 与 npm run test:browser；有模型的分支以mock验证错误回退，真实模型质量另行记录。
 
 6. 保留50MiB上传、视频任务预算和有界会话/样本；新增原始文件留存需在产品中写清数据流。
+
+在线版入口与构建见docs/ONLINE.md。浏览器和服务版本共用核心；修改后运行npm run test:online，保留以上在线能力边界，不把浏览器会话标成云端同步。

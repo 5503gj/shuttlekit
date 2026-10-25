@@ -1,4 +1,5 @@
 const state = { sessionId: null, socket: null, history: [], token:null, readToken:null, readOnly:false };
+const apiRequest=(...args)=>window.ShuttleBrowser?window.ShuttleBrowser.request(...args):fetch(...args);
 const $ = (id) => document.getElementById(id);
 
 function setBadge(text, online) { const badge = $("connectionBadge"); badge.textContent = text; badge.className = `badge ${online ? "badge-online" : "badge-offline"}`; }
@@ -30,9 +31,9 @@ function closeSocket() { if (state.socket) { state.socket.close(); state.socket 
 function connect(session) {
   closeSocket(); state.history = []; state.sessionId = session.session_id; state.token=session.write_token||session.read_token;state.readToken=session.read_token;state.readOnly=!session.write_token;
   const protocol = location.protocol === "https:" ? "wss" : "ws";
-  state.socket = new WebSocket(`${protocol}://${location.host}/ws/sessions/${state.sessionId}`);
+  state.socket = window.ShuttleBrowser?window.ShuttleBrowser.socket(state.sessionId):new WebSocket(`${protocol}://${location.host}/ws/sessions/${state.sessionId}`);
   const socket=state.socket;state.chartTimestamp=null;
-  state.socket.onopen = () => { state.socket.send(JSON.stringify({type:"auth",token:state.token}));setBadge(state.readOnly?"只读显示已连接":"采集端已连接",true); };
+  state.socket.onopen = () => { state.socket.send(JSON.stringify({type:"auth",token:state.token}));setBadge(window.ShuttleBrowser?"浏览器会话已就绪":state.readOnly?"只读显示已连接":"采集端已连接",true); };
   state.socket.onclose = () => setBadge("连接已断开", false);
   state.socket.onerror = () => setBadge("连接异常", false);
   state.socket.onmessage = (event) => { if(state.socket!==socket)return;const data = JSON.parse(event.data); if (!data.error) render(data); };
@@ -42,7 +43,7 @@ function connect(session) {
 async function createSession() {
   const body = { venue_id: $("venueId").value.trim(), court_id: $("courtId").value.trim(), fps: Number($("fps").value), px_per_meter: $("pxPerMeter").value.trim()===''?null:Number($("pxPerMeter").value) };
   if (!body.venue_id || !body.court_id) return alert("请填写球馆 ID 和场地 ID");
-  const response = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json",...adminHeaders() }, body: JSON.stringify(body) });
+  const response = await apiRequest("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json",...adminHeaders() }, body: JSON.stringify(body) });
   if (!response.ok) return alert("创建会话失败，请检查参数"); connect(await response.json());
 }
 function sendPoint(x, y, timestamp) { if(state.readOnly)return; if (!state.socket || state.socket.readyState !== WebSocket.OPEN) return alert("请先创建并连接实时会话"); state.socket.send(JSON.stringify({ type: "point", x, y, timestamp,source:'simulated' })); }
@@ -50,7 +51,7 @@ async function simulateShot(targetSpeed) {
   if (!state.sessionId || state.readOnly || state.simulating) return;
   const sessionId=state.sessionId;state.simulating=true;
   try {
-  const reset=await fetch('/api/sessions/'+sessionId+'/reset',{method:'POST',headers:{Authorization:'Bearer '+state.token}});
+  const reset=await apiRequest('/api/sessions/'+sessionId+'/reset',{method:'POST',headers:{Authorization:'Bearer '+state.token}});
   if(!reset.ok)throw new Error('重置失败，请重新连接');
   const pxPerMeter = Number($("pxPerMeter").value) || 50, interval = 80, distance = targetSpeed / 3.6 * pxPerMeter * interval / 1000, start = performance.now() / 1000;
   for (let i = 0; i < 8; i++) { if(state.sessionId!==sessionId)return;sendPoint(i * distance, 180 + Math.sin(i * .8) * 12, start + i * interval / 1000); await new Promise((resolve) => setTimeout(resolve, 80)); }
@@ -96,7 +97,8 @@ async function analyzeVideo() {
   const button = $("analyzeVideoBtn"); button.disabled = true; $("videoStatus").textContent = `正在分析 ${file.name}…`;
   const form = new FormData(); form.append("file", file); const scale=$("videoScale").value;if(scale)form.append("px_per_meter",scale);
   try {
-    const response = await fetch("/api/video/analyze", { method: "POST", headers:adminHeaders(), body: form });
+    if(window.ShuttleBrowser){const result=await window.ShuttleBrowser.analyzeVideo(file,scale);renderVideoReport(result);$("videoStatus").textContent=`浏览器分析完成 · ${result.total_frames}个采样帧 · ${result.duration_s}s`;return;}
+    const response = await apiRequest("/api/video/analyze", { method: "POST", headers:adminHeaders(), body: form });
     const payload = await response.json(); if (!response.ok) throw new Error(payload.detail || "视频分析失败");
     renderVideoReport(payload); $("videoStatus").textContent = `分析完成 · ${payload.total_frames} 帧 · ${payload.duration_s}s`;
   } catch (error) { $("videoStatus").textContent = error.message; alert(error.message); }
@@ -111,9 +113,9 @@ function renderEquipmentResults(payload) {
 async function recommendEquipment() {
   const payload = { category: $("equipmentCategory").value, level: $("equipmentLevel").value, budget: Number($("equipmentBudget").value), play_style: $("equipmentStyle").value, gender: "不限", top_k: 6 };
   const button = $("recommendEquipmentBtn"); button.disabled = true; $("equipmentResults").innerHTML = '<div class="history-empty">正在匹配装备…</div>';
-  try { const response = await fetch("/api/equipment/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(typeof data.detail==='string'?data.detail:"请检查预算与画像参数"); renderEquipmentResults(data); } catch (error) { $("equipmentResults").textContent=error.message; } finally { button.disabled = false; }
+  try { const response = await apiRequest("/api/equipment/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(typeof data.detail==='string'?data.detail:"请检查预算与画像参数"); renderEquipmentResults(data); } catch (error) { $("equipmentResults").textContent=error.message; } finally { button.disabled = false; }
 }
-async function loadEquipmentStats() { try { const response = await fetch("/api/equipment/stats"); const data = await response.json(); $("equipmentStats").textContent = `${data.total} 款样本 · 非实时爬取`; } catch (error) { $("equipmentStats").textContent = "装备库离线"; } }
+async function loadEquipmentStats() { try { const response = await apiRequest("/api/equipment/stats"); const data = await response.json(); $("equipmentStats").textContent = `${data.total} 款样本 · 非实时爬取`; } catch (error) { $("equipmentStats").textContent = "装备库离线"; } }
 $("createBtn").addEventListener("click", createSession);
 $("resetBtn").addEventListener("click", () => { if (state.socket?.readyState === WebSocket.OPEN) state.socket.send(JSON.stringify({ type: "reset" })); state.history = []; });
 document.querySelectorAll(".shot-button").forEach((button) => button.addEventListener("click", () => simulateShot(Number(button.dataset.speed))));
@@ -125,6 +127,7 @@ window.addEventListener("resize", drawChart); drawChart(); renderVideoHistory();
 
 function adminHeaders(){const token=$("adminToken").value.trim();return token?{Authorization:'Bearer '+token}:{};}
 $("copyReadLink").onclick=async()=>{
+ if(window.ShuttleBrowser)return window.ShuttleBrowser.exportSession(state);
  if(!state.sessionId)return alert('请先创建会话');
  const link=new URL(location.href);link.search='?session='+encodeURIComponent(state.sessionId);link.hash='read='+encodeURIComponent(state.readToken);
  try{await navigator.clipboard.writeText(link.href);alert('只读显示链接已复制；持链接者可查看该会话。')}catch{prompt('复制只读显示链接',link.href)}
@@ -132,6 +135,6 @@ $("copyReadLink").onclick=async()=>{
 (async()=>{
  const id=new URLSearchParams(location.search).get('session'),read=new URLSearchParams(location.hash.slice(1)).get('read');
  if(!id||!read)return;history.replaceState(null,'',location.pathname);
- const response=await fetch('/api/sessions/'+encodeURIComponent(id),{headers:{Authorization:'Bearer '+read}});
+ const response=await apiRequest('/api/sessions/'+encodeURIComponent(id),{headers:{Authorization:'Bearer '+read}});
  if(!response.ok)return setBadge('会话已失效或无权限',false);connect({...await response.json(),read_token:read});
 })();
