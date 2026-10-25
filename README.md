@@ -1,6 +1,26 @@
 > 2026-10-25：已修复审查中的核心正确性、权限与广播问题。部署方式、令牌协议、测试命令和企业采用前条件见[修复说明](docs/HARDENING.md)。原文中的示例估计不得理解为专业测量保证。
 
-# ShuttleKit - 羽毛球智能分析工具箱
+# ShuttleKit · 训练实验室与羽毛球分析工具箱
+
+## 新版训练工作台
+
+运行 `python speed_api.py` 后打开 `http://127.0.0.1:7862`：创建会话 → 模拟或带凭据推送坐标 →
+轨迹回放 → 选择训练目标 → 运行复盘教练 → 勾选练习并导出 JSON / Markdown。
+新版采用雾白与球场绿界面，支持手机、键盘拖动回放与减少动态效果。
+
+复盘教练实际执行读取窗口、核对来源/标定、统计与任务编排四个工具，使用本地规则，不调用LLM。
+统计来自最多300个坐标；训练任务来自你选择的目标，不伪装成自动动作诊断。
+坐标来源逐点声明为 `simulated` / `device` / `unverified`，混合窗口明确提示，声明不构成设备认证。
+模拟数据不评价运动能力；无比例只给px/s。场地背景仅作画面轨迹示意，不表示物理落点。
+回放保持采样时间间隔比例，总时长自适应限制0.8–12秒；可暂停和逐点查看。
+
+`GET /api/sessions/{id}/coach?goal=control|footwork|consistency`沿用当前会话的读/写能力令牌，
+只读不改变采集。报告固定当前窗口快照；新数据到达会提示重新运行。练习勾选仅存在本页，
+导出带完成项，不含令牌和管理员密钥。维护指南见[training-coach Skill](skills/training-coach/SKILL.md)，
+取舍见[设计参考](docs/DESIGN_REFERENCES.md)。
+
+验证：`python -m pytest -q`（89项）；`npm ci`、`npx playwright install chromium`、
+`npm run test:browser`（原有链路与新教练两组真实浏览器流程）。
 
 > 羽毛球爱好者的"瑞士军刀"：球速检测、场馆灯光评估、场地配置、比赛统计、器材知识库，一站式搞定。
 
@@ -12,9 +32,9 @@
 
 ## 这是什么
 
-ShuttleKit 是一个**模块化**的羽毛球综合分析工具箱。不管你是想分析自己的击球速度、评估场馆灯光是否合格、还是查什么球拍适合新手——打开对应模块就行。
+ShuttleKit 是一个**模块化**的羽毛球分析原型：从轨迹估计画面速度、查看图像曝光、记录比赛并在装备样本库内按预算匹配。
 
-每个模块**独立可用**，不需要全部跑通。你可以只用人脸都能操作的灯光分析模块，也可以深入跑 TrackNet 球速检测。
+模块可独立运行。照片不能验证照度合规；TrackNet尚未实现，YOLO需显式提供权重并另行验证羽毛球检测效果。
 
 ### 为什么做这个
 
@@ -26,8 +46,8 @@ ShuttleKit 是一个**模块化**的羽毛球综合分析工具箱。不管你�
 
 | 模块 | 功能 | 难度 | 需要 GPU？ |
 |------|------|------|-----------|
-| [court_lighting](./court_lighting) | 场馆灯光亮度评估 + 是否达标的判断 | ★☆☆ | 否 |
-| [court_config](./court_config) | 场地线检测 + 尺寸校验 + 配置建议 | ★★☆ | 否 |
+| [court_lighting](./court_lighting) | 图像曝光观察，非照度或合规测量 | ★☆☆ | 否 |
+| [court_config](./court_config) | 图像线段检测和配置参考，不自动证明场地物理尺寸 | ★★☆ | 否 |
 | [shuttle_speed](./shuttle_speed) | 羽毛球球速检测（轨迹→速度） | ★★★ | 推荐 |
 | [match_stats](./match_stats) | 比赛回合统计 + 数据可视化看板 | ★★☆ | 否 |
 | [equipment_kb](./equipment_kb) | 球拍/球鞋/球 知识库 + 选品推荐 | ☆☆☆ | 否 |
@@ -61,8 +81,8 @@ ShuttleKit 是一个**模块化**的羽毛球综合分析工具箱。不管你�
 ### 安装
 
 ```bash
-git clone https://github.com/your-username/ShuttleKit.git
-cd ShuttleKit
+git clone https://github.com/5503gj/shuttlekit.git
+cd shuttlekit
 pip install -r requirements.txt
 ```
 

@@ -51,8 +51,10 @@ class RealtimeSpeedSession:
         self.reset()
         return self.px_per_meter
 
-    def add_point(self, x: float, y: float, timestamp: Optional[float] = None) -> dict:
+    def add_point(self, x: float, y: float, timestamp: Optional[float] = None, *, source: str = 'unverified') -> dict:
         """添加球的位置并返回最新状态；timestamp 使用秒。"""
+        if source not in {'simulated','device','unverified'}:
+            raise ValueError('Unsupported point source')
         x, y = finite(x,"x"), finite(y,"y")
         ts = time.monotonic() if timestamp is None else finite(timestamp,"timestamp")
         if ts < 0:raise ValueError("timestamp must be nonnegative")
@@ -76,7 +78,7 @@ class RealtimeSpeedSession:
         self.current_speed_px_s = pixel_speed if self.last_timestamp is not None else 0
         self.current_speed_kmh = speed
         self.last_timestamp, self.last_x, self.last_y = ts, x, y
-        self.points.append({"x": x, "y": y, "timestamp": ts, "speed_kmh": speed})
+        self.points.append({"x": x, "y": y, "timestamp": ts, "speed_kmh": speed, "source": source})
         self.points = self.points[-300:]
         return self.snapshot(quality)
 
@@ -89,6 +91,7 @@ class RealtimeSpeedSession:
         return self.snapshot("reset")
 
     def snapshot(self, quality: str = "waiting") -> dict:
+        sources={point.get('source','unverified') for point in self.points}
         return {
             "session_id": self.session_id, "venue_id": self.venue_id,
             "court_id": self.court_id,
@@ -99,8 +102,9 @@ class RealtimeSpeedSession:
             "peak_speed_kmh": round(max(self.speed_history), 1) if self.speed_history else None,
             "average_speed_kmh": round(sum(self.speed_history) / len(self.speed_history), 1) if self.speed_history else None,
             "sample_count": len(self.speed_history), "fps": self.fps,
-            "px_per_meter": round(self.px_per_meter, 3) if self.px_per_meter is not None else None,
+            "px_per_meter": self.px_per_meter,
             "last_point": self.points[-1] if self.points else None,
+            "data_source": next(iter(sources)) if len(sources)==1 else 'mixed' if sources else 'unverified',
         }
 
 

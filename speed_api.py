@@ -9,7 +9,7 @@ import tempfile
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Optional
+from typing import Optional,Literal
 from fastapi import FastAPI,File,Form,Header,HTTPException,UploadFile,WebSocket,WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +19,7 @@ from starlette.formparsers import MultiPartException
 from shuttle_speed.realtime import SpeedSessionStore
 from shuttle_speed.video_speed import VideoSpeedAnalyzer
 from equipment_kb.recommender import EquipmentRecommender,UserProfile
+from training_coach import build_report
 
 PUBLIC_MODE=os.getenv("SHUTTLEKIT_PUBLIC")=="1" or os.getenv("HOST","127.0.0.1") not in {"127.0.0.1","localhost","::1"}
 ADMIN_TOKEN=os.getenv("SHUTTLEKIT_ADMIN_TOKEN","")
@@ -68,9 +69,10 @@ class SessionCreate(StrictModel):
     fps:FiniteFloat=Field(default=60,gt=0,le=240)
     px_per_meter:Optional[FiniteFloat]=Field(default=None,gt=0,le=1000000)
 class PointPayload(StrictModel):
-    x:FiniteFloat
-    y:FiniteFloat
+    x:FiniteFloat=Field(ge=-1e9,le=1e9)
+    y:FiniteFloat=Field(ge=-1e9,le=1e9)
     timestamp:Optional[FiniteFloat]=Field(default=None,ge=0)
+    source:Literal['simulated','device','unverified']='unverified'
 class EquipmentRecommendPayload(StrictModel):
     category:str=Field(default='racket',pattern='^(racket|shoe|shuttlecock)$')
     level:str=Field(default='中级',pattern='^(入门|初级|中级|高级|新手|进阶|专业|资深|初中级|中高级|业余|初学者|娱乐)$')
@@ -128,9 +130,16 @@ def venue_overview(venue_id:str,authorization:Optional[str]=Header(default=None)
 async def add_point(session_id:str,payload:PointPayload,authorization:Optional[str]=Header(default=None)):
     session=authorize(session_id,authorization,write=True)
     async with mutation_locks[session_id]:
-        try:state=session.add_point(payload.x,payload.y,payload.timestamp)
+        try:state=session.add_point(payload.x,payload.y,payload.timestamp,source=payload.source)
         except ValueError as exc:raise HTTPException(422,str(exc)) from exc
         await broadcast(session_id,state);return state
+
+@app.get('/api/sessions/{session_id}/coach')
+async def session_coach(session_id:str,goal:Literal['control','footwork','consistency']='consistency',authorization:Optional[str]=Header(default=None)):
+    session=authorize(session_id,authorization)
+    async with mutation_locks[session_id]:
+        try:return build_report(session.snapshot(),session.points,goal)
+        except ValueError as exc:raise HTTPException(422,str(exc)) from exc
 
 @app.post('/api/sessions/{session_id}/reset')
 async def reset_session(session_id:str,authorization:Optional[str]=Header(default=None)):
@@ -232,7 +241,7 @@ async def speed_socket(websocket:WebSocket,session_id:str):
                 if event.get('type')=='reset':state=session.reset()
                 elif event.get('type','point')=='point':
                     point=PointPayload.model_validate({k:v for k,v in event.items() if k!='type'})
-                    state=session.add_point(point.x,point.y,point.timestamp)
+                    state=session.add_point(point.x,point.y,point.timestamp,source=point.source)
                 else:raise ValueError('Unknown event')
                 await broadcast(session_id,state)
     except WebSocketDisconnect:pass

@@ -1,95 +1,25 @@
 <!doctype html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ShuttleKit · 球馆实时球速</title>
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body><div style="padding:12px 24px"><label>管理员访问令牌（公网创建/视频需要） <input id="adminToken" type="password" autocomplete="off" /></label> <button id="copyReadLink" type="button">复制只读大屏链接</button><span>本机为演示模式；比例须人工确认，模拟击球不代表测量精度。</span></div>
-    <main class="shell">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">SHUTTLEKIT / VENUE OPS</p>
-          <h1>球馆实时球速</h1>
-          <p class="subtitle">让每一块场地都能看见训练反馈。</p>
-        </div>
-        <div id="connectionBadge" class="badge badge-offline">未连接</div>
-      </header>
-
-      <section class="hero-card">
-        <div class="hero-copy">
-          <span class="live-dot"></span>
-          <span>实时监测控制台</span>
-          <h2>一眼看到这一拍有多快</h2>
-          <p>为球馆提供场地级测速、峰值记录和训练反馈。当前版本支持模拟演示，也已经预留摄像头识别接入接口。</p>
-        </div>
-        <div class="hero-mark" aria-hidden="true">羽</div>
-      </section>
-
-      <section class="control-card">
-        <div class="section-heading">
-          <div><p class="eyebrow">01 / SESSION</p><h3>建立场地会话</h3></div>
-          <span class="hint">每块场地一个实时会话</span>
-        </div>
-        <div class="form-grid">
-          <label>球馆 ID<input id="venueId" value="shanghai-center" /></label>
-          <label>场地 ID<input id="courtId" value="court-01" /></label>
-          <label>摄像头 FPS<input id="fps" type="number" min="1" max="240" value="60" /></label>
-          <label>像素 / 米<input id="pxPerMeter" type="number" min="1" value="50" /></label>
-        </div>
-        <div class="actions">
-          <button id="createBtn" class="button button-primary">创建实时会话</button>
-          <button id="resetBtn" class="button button-quiet" disabled>清空本场数据</button>
-          <span id="sessionLabel" class="session-label">尚未创建会话</span>
-        </div>
-      </section>
-
-      <section class="metrics-grid">
-        <article class="metric-card metric-main"><span>当前球速</span><strong id="currentSpeed">0.0</strong><small>km/h</small></article>
-        <article class="metric-card"><span>本场峰值</span><strong id="peakSpeed">0.0</strong><small>km/h</small></article>
-        <article class="metric-card"><span>平均球速</span><strong id="averageSpeed">0.0</strong><small>km/h</small></article>
-        <article class="metric-card"><span>有效样本</span><strong id="sampleCount">0</strong><small>次</small></article>
-      </section>
-
-      <section class="content-grid">
-        <article class="panel chart-panel">
-          <div class="panel-heading"><div><p class="eyebrow">02 / LIVE CHART</p><h3>球速走势</h3></div><span id="qualityLabel">等待数据</span></div>
-          <canvas id="speedChart" width="900" height="300"></canvas>
-          <div class="chart-axis"><span>最近 30 次有效击球</span><span>km/h</span></div>
-        </article>
-
-        <article class="panel demo-panel">
-          <div class="panel-heading"><div><p class="eyebrow">03 / DEMO</p><h3>模拟击球</h3></div><span class="demo-tag">演示模式</span></div>
-          <p class="panel-note">点击按钮模拟一条球的移动轨迹，验证球馆大屏、WebSocket 和小程序链路。</p>
-          <div class="demo-buttons">
-            <button class="shot-button" data-speed="90"><span>训练球</span><strong>90</strong><small>km/h</small></button>
-            <button class="shot-button" data-speed="180"><span>平抽球</span><strong>180</strong><small>km/h</small></button>
-            <button class="shot-button shot-hot" data-speed="320"><span>杀球</span><strong>320</strong><small>km/h</small></button>
-          </div>
-          <div class="integration-note"><b>真实接入路径</b><span>固定摄像头 → TrackNet / YOLO 检测球心 → 标定像素比例 → WebSocket 推送坐标</span></div>
-        </article>
-
-        <article class="panel video-panel">
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#164f3a"><title>ShuttleKit · 训练实验室</title><link rel="stylesheet" href="/styles.css"></head>
+<body><header class="topbar"><a class="brand" href="/" aria-label="ShuttleKit首页"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 3 4 19l9 9 15-6-8-18-4 17-8-2 12-15M4 19l24 3M8 3l5 25"/></svg><span>SHUTTLE<span class="brand-light">KIT</span><small>训练实验室</small></span></a><nav><a href="#workspace">训练工作台</a><a href="#library">视频与装备</a><a href="https://github.com/5503gj/shuttlekit" target="_blank" rel="noopener noreferrer">GitHub ↗</a></nav><span id="connectionBadge" class="badge badge-offline">未连接</span></header>
+<main class="shell"><section class="intro"><div><p class="eyebrow">OBSERVE. REPLAY. IMPROVE.</p><h1>每一拍，<em>留下依据。</em></h1></div><p>把轨迹变成可回看的训练记录。<br>从测量条件出发，让下一组练习更有方向。</p></section>
+<div class="workbench" id="workspace">
+<aside class="session-panel"><div class="panel-heading"><div><p class="eyebrow">01 / SET THE SCENE</p><h2>准备这次训练</h2></div><span class="section-number">01</span></div><p class="panel-note">每个会话保留最近300个坐标点。比例留空时，只显示像素速度。</p><div class="form-grid"><label>球馆<input id="venueId" value="training-lab" maxlength="80"></label><label>场地<input id="courtId" value="court-01" maxlength="80"></label><label>采集 FPS<input id="fps" type="number" min="1" max="240" value="60"></label><label>像素 / 米<input id="pxPerMeter" type="number" min="0.001" step="any" value="50" placeholder="未知可留空"></label></div><button id="createBtn" class="button button-primary">创建实时会话 <span>↗</span></button><p id="sessionLabel" class="session-label">尚未创建会话</p><div class="session-actions"><button id="resetBtn" class="button button-quiet" disabled>清空本场数据</button><button id="copyReadLink" class="button button-quiet">复制只读链接</button></div><details class="access-details"><summary>公网访问设置</summary><label>管理员令牌<input id="adminToken" type="password" autocomplete="off" placeholder="公网创建 / 视频时需要"></label><p class="panel-note">本机默认演示模式；共享链接授予当前会话只读权限。</p></details><div class="demo-area"><p class="eyebrow">TRY A RALLY</p><h3>先来一拍，试试看。</h3><p class="panel-note">模拟坐标验证计算和同步；每次重置当前窗口，不是实测成绩。</p><div class="demo-buttons"><button class="shot-button" data-speed="90"><span>节奏球</span><strong>90</strong><small>km/h 目标</small></button><button class="shot-button" data-speed="180"><span>快速球</span><strong>180</strong><small>km/h 目标</small></button><button class="shot-button" data-speed="320"><span>高速球</span><strong>320</strong><small>km/h 目标</small></button></div></div><p class="integration-note">真实接入：外部检测器 → 球心坐标与时间戳 → 人工比例 → 带凭据推送。当前未内置已验证的摄像头识别模型。</p></aside>
+<section class="training-main"><div class="metrics-grid" aria-label="当前会话指标"><article class="metric-main"><span>当前速度估计</span><strong id="currentSpeed">—</strong><small>km/h</small></article><article><span>窗口峰值</span><strong id="peakSpeed">—</strong><small>km/h</small></article><article><span>窗口均值</span><strong id="averageSpeed">—</strong><small>km/h</small></article><article><span>速度样本</span><strong id="sampleCount">0</strong><small>个间隔</small></article></div>
+<div class="trajectory-panel"><div class="panel-heading"><div><p class="eyebrow">02 / THE RALLY, REVISITED</p><h2>把这一拍，慢下来。</h2></div><span id="sourceLabel" class="source-label">来源未验证</span></div><div class="trajectory-stage"><svg id="trajectory" viewBox="0 0 860 400" role="img" aria-label="图像坐标轨迹回放"><defs><pattern id="grid" width="43" height="40" patternUnits="userSpaceOnUse"><path d="M43 0H0V40" fill="none" stroke="currentColor" stroke-width=".5"/></pattern></defs><rect width="860" height="400" fill="url(#grid)" class="grid-lines"/><rect x="40" y="30" width="780" height="340" rx="3" class="court-line"/><path d="M430 30V370M40 200H820M185 30V370M675 30V370" class="court-line court-secondary"/><path id="trajectoryPath" class="trajectory-path"/><g id="trajectoryDots"></g><circle id="trajectoryCursor" r="8" class="trajectory-cursor" hidden/><text id="trajectoryEmpty" x="430" y="192" text-anchor="middle">创建会话，再模拟一拍或推送坐标</text><text x="430" y="350" text-anchor="middle" class="map-disclaimer">归一化画面轨迹示意 · 非实际球场落点</text></svg><span class="stage-coordinate">IMAGE COORDINATES / 2D</span></div><div class="replay-controls"><button id="replayBtn" class="button button-quiet" disabled aria-label="播放轨迹">▶ 回放</button><label class="sr-only" for="replayRange">轨迹帧位置</label><input id="replayRange" type="range" min="0" max="0" value="0" disabled><output id="replayTime">0 / 0</output></div><div class="chart-heading"><span>最近30个速度间隔</span><span id="chartUnit">km/h · 未标定时为空</span></div><canvas id="speedChart" width="900" height="150" role="img" aria-label="最近速度间隔折线图"></canvas><div class="chart-axis"><span id="qualityLabel">等待数据</span><span id="lastUpdate">等待连接</span></div></div></section>
+<aside class="coach-panel"><p class="eyebrow">YOUR NEXT SESSION</p><h2>训练复盘教练<span>↗</span></h2><p class="panel-note">读当前窗口，核对测量条件，再把你的目标编排成练习。由本地规则工具执行。</p><label>这次想关注什么？<select id="coachGoal"><option value="consistency">稳定与记录</option><option value="control">控球与节奏</option><option value="footwork">移动与回位</option></select></label><div class="coach-actions"><button id="coachRun" class="button button-primary">复盘当前窗口 <span>↗</span></button><button id="coachCancel" class="button button-quiet" hidden>取消</button></div><p id="coachStatus" role="status">创建会话后开始；复盘只读，不更改采集数据。</p><ol id="coachTools" class="tool-trace"><li class="tool-empty">读取窗口 → 核对来源 → 统计 → 编排任务</li></ol><div id="coachResult" hidden><div id="coachObservations" class="observations"></div><div class="plan-header"><h3>下一组，怎么练？</h3><span id="planDuration"></span></div><div id="coachPlan"></div><p id="planProgress" class="plan-progress">勾选已完成练习 · 仅本页记录</p><details open class="report-limits"><summary>这份报告能说明什么</summary><ul id="coachLimits"></ul></details><div class="export-actions"><button id="exportJson" class="button button-quiet">JSON ↓</button><button id="exportMarkdown" class="button button-quiet">复盘笔记 ↓</button></div></div><p class="coach-footnote">不自动判定杀球、动作水平或受伤风险。训练建议来自所选目标，仍需结合人工观察。</p></aside>
+</div><section id="library" class="library"><div class="library-heading"><div><p class="eyebrow">KEEP EXPLORING</p><h2>训练之外，再多一点。</h2></div><div class="library-tabs" role="tablist" aria-label="训练工具"><button role="tab" data-tab="video" id="tab-video" aria-controls="panel-video" aria-selected="true">视频分析</button><button role="tab" data-tab="equipment" id="tab-equipment" aria-controls="panel-equipment" aria-selected="false" tabindex="-1">装备参考</button><button role="tab" data-tab="history" id="tab-history" aria-controls="panel-history" aria-selected="false" tabindex="-1">本机记录</button></div></div>
+<article id="panel-video" class="panel video-panel" role="tabpanel" aria-labelledby="tab-video">
           <div class="panel-heading"><div><p class="eyebrow">04 / VIDEO ANALYSIS</p><h3>上传视频检测球速</h3></div><span class="demo-tag">短视频 MVP</span></div>
-          <p class="panel-note">上传固定机位的 MP4 / MOV / AVI 视频。系统会根据场地线估计单双打尺寸，再追踪画面中移动的羽毛球候选点，并判断是否疑似杀球。</p>
+          <p class="panel-note">固定机位短视频，提取移动候选点。场地尺寸未测量，比例需人工输入；不等于已验证的羽毛球识别或三维测速。</p>
           <label>视频比例（实际测量px/m，留空仅px/s）<input id="videoScale" type="number" min="0.001" step="any" /></label><div class="video-upload-row"><label class="file-picker">选择视频<input id="videoFile" type="file" accept="video/mp4,video/quicktime,video/avi,video/webm,.mkv" /></label><button id="analyzeVideoBtn" class="button button-primary">开始检测</button><span id="videoStatus" class="session-label">尚未选择视频</span></div>
           <div id="videoResult" class="video-result hidden">
-            <div class="video-result-main"><span>判断结果</span><strong id="videoShotType">—</strong><small id="videoConfidence">置信度 —</small></div>
-            <div class="video-result-grid"><div><span>峰值球速</span><b id="videoPeak">0.0 km/h</b></div><div><span>平均球速</span><b id="videoAverage">0.0 km/h</b></div><div><span>画面轨迹角</span><b id="videoAngle">—</b></div><div><span>场地尺寸</span><b id="videoCourtSize">—</b></div><div><span>有效检测率</span><b id="videoDetectionRate">—</b></div><div><span>像素标定</span><b id="videoCalibration">—</b></div></div>
-            <div class="video-result-actions"><button id="shareVideoBtn" class="button button-quiet">生成成绩分享卡</button><span class="session-label">结果默认只保存在本机浏览器</span></div>
+            <div class="video-result-main"><span>候选轨迹参考</span><strong id="videoShotType">—</strong><small id="videoConfidence">阈值参考，非校准概率</small></div>
+            <div class="video-result-grid"><div><span>峰值球速</span><b id="videoPeak">—</b></div><div><span>平均球速</span><b id="videoAverage">—</b></div><div><span>画面轨迹角</span><b id="videoAngle">—</b></div><div><span>场地尺寸</span><b id="videoCourtSize">—</b></div><div><span>候选点检测率</span><b id="videoDetectionRate">—</b></div><div><span>像素标定</span><b id="videoCalibration">—</b></div></div>
+            <div class="video-result-actions"><button id="shareVideoBtn" class="button button-quiet">生成参考结果卡</button><span class="session-label">带标定的视频摘要保存在本机浏览器</span></div>
             <ul id="videoWarnings" class="video-warnings"></ul>
           </div>
-        </article>
-
-        <article class="panel history-panel">
-          <div class="panel-heading"><div><p class="eyebrow">05 / TRAINING HISTORY</p><h3>训练记录</h3></div><span id="historySummary">0 次视频</span></div>
-          <div id="historyEmpty" class="history-empty">完成一次视频分析后，这里会显示峰值、角度和击球判断。</div>
-          <div id="historyList" class="history-list"></div>
-        </article>
-
-        <article class="panel equipment-panel">
-          <div class="panel-heading"><div><p class="eyebrow">06 / EQUIPMENT ADVISOR</p><h3>装备库与个性化推荐</h3></div><span id="equipmentStats">加载装备库…</span></div>
+        </article><article id="panel-equipment" class="panel equipment-panel" role="tabpanel" aria-labelledby="tab-equipment" hidden>
+          <div class="panel-heading"><div><p class="eyebrow">06 / EQUIPMENT ADVISOR</p><h3>装备库与规则匹配参考</h3></div><span id="equipmentStats">加载装备库…</span></div>
           <p class="panel-note">基于现有样本库进行推荐，展示品牌规格、打法匹配和来源。数据采用品牌公开规格、公开评测人工整理和后续授权数据，不依赖中羽实时爬取。</p>
           <div class="equipment-controls">
             <label>装备类型<select id="equipmentCategory"><option value="racket">球拍</option><option value="shoe">球鞋</option><option value="shuttlecock">羽毛球</option></select></label>
@@ -99,11 +29,8 @@
             <button id="recommendEquipmentBtn" class="button button-primary">生成推荐</button>
           </div>
           <div id="equipmentResults" class="equipment-results"><div class="history-empty">填写画像后生成推荐。</div></div>
-        </article>
-      </section>
-
-      <footer class="footer"><span>ShuttleKit · 羽毛球场馆数字化工具箱</span><span id="lastUpdate">等待连接</span></footer>
-    </main>
-    <script src="/app.js"></script>
-  </body>
-</html>
+        </article><article id="panel-history" class="panel history-panel" role="tabpanel" aria-labelledby="tab-history" hidden>
+          <div class="panel-heading"><div><p class="eyebrow">05 / TRAINING HISTORY</p><h3>训练记录</h3></div><span id="historySummary">0 次视频</span></div>
+          <div id="historyEmpty" class="history-empty">暂无带标定的视频摘要。未标定结果不会作为km/h成绩保存。</div>
+          <div id="historyList" class="history-list"></div>
+        </article></section><footer class="footer"><span>SHUTTLEKIT / 测量有边界，训练有方向。</span><span>本地规则 · 可追溯窗口 · 人工判断</span></footer></main><script src="/app.js"></script><script src="/coach.js"></script></body></html>

@@ -2,7 +2,7 @@ name: Tests
 on: [push, pull_request]
 jobs:
   core:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -15,6 +15,7 @@ jobs:
         with:
           node-version: '22'
       - run: node --check web/app.js
+      - run: node --check web/coach.js
       - run: node --check miniprogram/pages/index/index.js
       - run: npm ci
       - run: npx playwright install --with-deps chromium

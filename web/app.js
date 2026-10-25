@@ -3,14 +3,17 @@ const $ = (id) => document.getElementById(id);
 
 function setBadge(text, online) { const badge = $("connectionBadge"); badge.textContent = text; badge.className = `badge ${online ? "badge-online" : "badge-offline"}`; }
 function render(data) {
-  if(data.quality==="reset")state.history=[];
+  state.snapshot=data;
+  if(data.quality==="reset"){state.history=[];state.chartTimestamp=null;}
+  $("chartUnit").textContent=data.px_per_meter==null?`未标定 · 当前 ${Number(data.current_speed_px_s||0).toFixed(1)} px/s`:'km/h · 2D比例估计';
   $("currentSpeed").textContent = data.current_speed_kmh == null ? '—' : Number(data.current_speed_kmh).toFixed(1);
   $("peakSpeed").textContent = data.peak_speed_kmh == null ? '—' : Number(data.peak_speed_kmh).toFixed(1);
   $("averageSpeed").textContent = data.average_speed_kmh == null ? '—' : Number(data.average_speed_kmh).toFixed(1);
   $("sampleCount").textContent = data.sample_count || 0;
   $("qualityLabel").textContent = data.quality === "outlier" ? "已过滤异常点" : data.status === "tracking" ? "追踪中" : "等待数据";
   $("lastUpdate").textContent = `最后更新 ${new Date().toLocaleTimeString()}`;
-  if (data.last_point && data.quality !== "outlier") { state.history.push(Number(data.last_point.speed_kmh || 0)); state.history = state.history.slice(-30); }
+  if (data.last_point && data.quality !== "outlier" && data.last_point.speed_kmh!=null && state.chartTimestamp!==data.last_point.timestamp) { state.history.push(Number(data.last_point.speed_kmh)); state.history = state.history.slice(-30);state.chartTimestamp=data.last_point.timestamp; }
+  window.dispatchEvent(new CustomEvent('shuttle-state',{detail:data}));
   drawChart();
 }
 function drawChart() {
@@ -28,20 +31,21 @@ function connect(session) {
   closeSocket(); state.history = []; state.sessionId = session.session_id; state.token=session.write_token||session.read_token;state.readToken=session.read_token;state.readOnly=!session.write_token;
   const protocol = location.protocol === "https:" ? "wss" : "ws";
   state.socket = new WebSocket(`${protocol}://${location.host}/ws/sessions/${state.sessionId}`);
+  const socket=state.socket;state.chartTimestamp=null;
   state.socket.onopen = () => { state.socket.send(JSON.stringify({type:"auth",token:state.token}));setBadge(state.readOnly?"只读显示已连接":"采集端已连接",true); };
   state.socket.onclose = () => setBadge("连接已断开", false);
   state.socket.onerror = () => setBadge("连接异常", false);
-  state.socket.onmessage = (event) => { const data = JSON.parse(event.data); if (!data.error) render(data); };
+  state.socket.onmessage = (event) => { if(state.socket!==socket)return;const data = JSON.parse(event.data); if (!data.error) render(data); };
   $("sessionLabel").textContent = `${session.venue_id} / ${session.court_id} · ${session.session_id}`;
   $("resetBtn").disabled = state.readOnly; document.querySelectorAll(".shot-button").forEach(b=>b.disabled=state.readOnly); render(session);
 }
 async function createSession() {
-  const body = { venue_id: $("venueId").value.trim(), court_id: $("courtId").value.trim(), fps: Number($("fps").value), px_per_meter: Number($("pxPerMeter").value) };
+  const body = { venue_id: $("venueId").value.trim(), court_id: $("courtId").value.trim(), fps: Number($("fps").value), px_per_meter: $("pxPerMeter").value.trim()===''?null:Number($("pxPerMeter").value) };
   if (!body.venue_id || !body.court_id) return alert("请填写球馆 ID 和场地 ID");
   const response = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json",...adminHeaders() }, body: JSON.stringify(body) });
   if (!response.ok) return alert("创建会话失败，请检查参数"); connect(await response.json());
 }
-function sendPoint(x, y, timestamp) { if(state.readOnly)return; if (!state.socket || state.socket.readyState !== WebSocket.OPEN) return alert("请先创建并连接实时会话"); state.socket.send(JSON.stringify({ type: "point", x, y, timestamp })); }
+function sendPoint(x, y, timestamp) { if(state.readOnly)return; if (!state.socket || state.socket.readyState !== WebSocket.OPEN) return alert("请先创建并连接实时会话"); state.socket.send(JSON.stringify({ type: "point", x, y, timestamp,source:'simulated' })); }
 async function simulateShot(targetSpeed) {
   if (!state.sessionId || state.readOnly || state.simulating) return;
   const sessionId=state.sessionId;state.simulating=true;
@@ -65,19 +69,19 @@ function renderVideoReport(report) {
   $("videoCalibration").textContent = court.px_per_meter == null ? '未标定，仅px/s' : `${court.px_per_meter} px/m · 人工输入（2D投影估计）`;
   const warnings = $("videoWarnings"); warnings.innerHTML = "";
   (report.warnings || []).forEach((warning) => { const item = document.createElement("li"); item.textContent = warning; warnings.appendChild(item); });
-  state.history = (report.speed_curve || []).map(Number).slice(-30); drawChart();
+  // Video results have their own report; keep the live chart tied to its session.
   saveVideoHistory(report);
 }
-function loadVideoHistory() { try { return JSON.parse(localStorage.getItem("shuttlekit.videoHistory") || "[]"); } catch (error) { return []; } }
+function loadVideoHistory() { try { const rows=JSON.parse(localStorage.getItem("shuttlekit.videoHistory") || "[]");return Array.isArray(rows)?rows.filter(row=>row&&Number.isFinite(row.peak)&&Number.isFinite(row.average)).slice(0,20):[]; } catch (error) { return []; } }
 function saveVideoHistory(report) {
-  if(report.peak_speed_kmh == null)return; const records = loadVideoHistory(); records.unshift({ at: new Date().toISOString(), name: report.video_name, shot: report.shot_type, peak: Number(report.peak_speed_kmh || 0), average: Number(report.average_speed_kmh || 0), angle: Number(report.smash_angle_deg || 0) });
-  localStorage.setItem("shuttlekit.videoHistory", JSON.stringify(records.slice(0, 20))); renderVideoHistory();
+  if(report.peak_speed_kmh == null || report.average_speed_kmh==null)return; const records = loadVideoHistory(); records.unshift({ at: new Date().toISOString(), shot:String(report.shot_type||'未知'), peak: Number(report.peak_speed_kmh), average: Number(report.average_speed_kmh), angle: report.trajectory_angle_deg??null });
+  try{localStorage.setItem("shuttlekit.videoHistory", JSON.stringify(records.slice(0, 20)));renderVideoHistory();}catch{$("videoStatus").textContent='结果已生成；本机存储不可用，摘要未保存。';}
 }
 function renderVideoHistory() {
   const records = loadVideoHistory(), list = $("historyList"), empty = $("historyEmpty");
   $("historySummary").textContent = `${records.length} 次视频 · 最佳 ${records.length ? Math.max(...records.map((item) => item.peak)).toFixed(1) : "0.0"} km/h`;
   empty.classList.toggle("hidden", records.length > 0); list.innerHTML = "";
-  records.slice(0, 8).forEach((item) => { const row = document.createElement("div"); row.className = "history-item"; row.innerHTML = `<span>${new Date(item.at).toLocaleString()}</span><strong>${item.peak.toFixed(1)} km/h</strong><span>平均 ${item.average.toFixed(1)}</span><span>角度 ${item.angle.toFixed(1)}°</span><span>${item.shot}</span>`; list.appendChild(row); });
+  records.slice(0, 8).forEach((item) => { const row = document.createElement("div");row.className='history-item';for(const text of [new Date(item.at).toLocaleString(),`${item.peak.toFixed(1)} km/h`,`均值 ${item.average.toFixed(1)}`,Number.isFinite(item.angle)?`画面角 ${item.angle.toFixed(1)}°`:'画面角未知',item.shot]){const span=document.createElement('span');span.textContent=text;row.appendChild(span);}list.appendChild(row); });
 }
 function shareVideoResult() {
   const canvas = document.createElement("canvas"); canvas.width = 1000; canvas.height = 560; const ctx = canvas.getContext("2d");
@@ -102,12 +106,12 @@ function formatEquipmentPrice(item) { return item.price_min != null && item.pric
 function renderEquipmentResults(payload) {
   const container = $("equipmentResults"); container.innerHTML = "";
   if (!payload.results?.length) { container.innerHTML = '<div class="history-empty">当前画像暂无匹配结果。</div>'; return; }
-  payload.results.forEach((match) => { const item = match.item, card = document.createElement("div"); card.className = "equipment-card"; card.innerHTML = `<h4>${item.brand || ""} ${item.model || ""}</h4><div class="equip-meta">匹配分 ${Number(match.score || 0).toFixed(0)} · 评分 ${item.rating || "—"}</div><div class="equip-price">${formatEquipmentPrice(item)}</div><div class="equip-reasons">${(match.reasons || []).join(" · ") || "综合匹配"}<br>${Object.entries(item.specs || {}).map(([key, value]) => `${key}: ${value}`).join(" · ")}</div><div class="equip-source">来源：${item.source || "未标注"}</div>`; container.appendChild(card); });
+  payload.results.forEach((match) => { const item=match.item,card=document.createElement('div');card.className='equipment-card';for(const [tag,cls,text] of [['h4','',`${item.brand||''} ${item.model||''}`],['div','equip-meta',`规则匹配 ${Number(match.score||0).toFixed(0)} · 样本评分 ${item.rating||'—'}`],['div','equip-price',formatEquipmentPrice(item)],['div','equip-reasons',`${(match.reasons||[]).join(' · ')} · ${Object.entries(item.specs||{}).map(([k,v])=>`${k}: ${v}`).join(' · ')}`],['div','equip-source',`来源：${item.source||'未标注'}`]]){const node=document.createElement(tag);node.className=cls;node.textContent=text;card.appendChild(node);}container.appendChild(card); });
 }
 async function recommendEquipment() {
   const payload = { category: $("equipmentCategory").value, level: $("equipmentLevel").value, budget: Number($("equipmentBudget").value), play_style: $("equipmentStyle").value, gender: "不限", top_k: 6 };
   const button = $("recommendEquipmentBtn"); button.disabled = true; $("equipmentResults").innerHTML = '<div class="history-empty">正在匹配装备…</div>';
-  try { const response = await fetch("/api/equipment/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || "推荐失败"); renderEquipmentResults(data); } catch (error) { $("equipmentResults").innerHTML = `<div class="history-empty">${error.message}</div>`; } finally { button.disabled = false; }
+  try { const response = await fetch("/api/equipment/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(typeof data.detail==='string'?data.detail:"请检查预算与画像参数"); renderEquipmentResults(data); } catch (error) { $("equipmentResults").textContent=error.message; } finally { button.disabled = false; }
 }
 async function loadEquipmentStats() { try { const response = await fetch("/api/equipment/stats"); const data = await response.json(); $("equipmentStats").textContent = `${data.total} 款样本 · 非实时爬取`; } catch (error) { $("equipmentStats").textContent = "装备库离线"; } }
 $("createBtn").addEventListener("click", createSession);
