@@ -1,8 +1,9 @@
 import {PythonTools} from './python-tools.js';
 const status=document.getElementById('engineStatus'),retry=document.getElementById('retryEngine');
 const tools=new PythonTools(message=>status.textContent=message);
-let ready,serial=Promise.resolve(),queued=0,videoCancelled=false;
-function initialize(){ready=tools.call('init').then(value=>{retry.hidden=true;return value;}).catch(error=>{retry.hidden=false;status.textContent='引擎加载失败，请检查网络后重试。';throw error;});ready.catch(()=>{});}
+let ready,serial=Promise.resolve(),queued=0,videoCancelled=false,scriptsReady=false,engineReady=false;
+function enableControls(){if(scriptsReady&&engineReady)document.querySelectorAll('[data-browser-startup]').forEach(control=>control.disabled=false);}
+function initialize(){engineReady=false;ready=tools.call('init').then(value=>{engineReady=true;enableControls();retry.hidden=true;return value;}).catch(error=>{retry.hidden=false;status.textContent='引擎加载失败，请检查网络后重试。';throw error;});ready.catch(()=>{});}
 initialize();retry.onclick=()=>{if(!queued){tools.cancel();initialize();}};
 function compute(action,data={}){
  if(queued>=32)return Promise.reject(new Error('操作太快，请稍候。'));
@@ -66,6 +67,7 @@ document.getElementById('cancelVideo').onclick=()=>{videoCancelled=true;document
 window.ShuttleBrowser={request,socket:id=>new PageSocket(id),exportSession,analyzeVideo};
 function script(name){return new Promise((resolve,reject)=>{const tag=document.createElement('script');tag.src=new URL(name,import.meta.url).href;tag.onload=resolve;tag.onerror=reject;document.body.appendChild(tag);});}
 await script('./app.js');await script('./coach.js');
+scriptsReady=true;enableControls();
 document.getElementById('importTrajectory').onchange=async event=>{
  const file=event.target.files[0],message=document.getElementById('importStatus');if(!file)return;
  try{

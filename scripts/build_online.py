@@ -13,6 +13,8 @@ source=source.replace('固定机位短视频，提取移动候选点。场地尺
 source=source.replace('<div class="video-upload-row">','<p class="panel-note">浏览器能解码的MP4 / WebM / MOV；文件不上传，逐帧抽样耗时受设备影响。</p><div class="video-upload-row">')
 source=source.replace('<button id="analyzeVideoBtn"','<button id="cancelVideo" class="button button-quiet" hidden>取消视频分析</button><button id="analyzeVideoBtn"')
 source=source.replace('SHUTTLEKIT / 测量有边界，训练有方向。','SHUTTLEKIT / 浏览器在线版 · 数据不上传')
+for control in ('createBtn','coachRun','recommendEquipmentBtn','analyzeVideoBtn','importTrajectory'):
+    source=source.replace(f'id="{control}"',f'id="{control}" disabled data-browser-startup')
 (OUT/'index.html').write_text(source,encoding='utf8')
 with zipfile.ZipFile(OUT/'python-source.zip','w',zipfile.ZIP_DEFLATED) as zipped:
     for name in ('shuttle_speed/__init__.py','shuttle_speed/realtime.py','shuttle_speed/speed_calc.py','shuttle_speed/track.py','shuttle_speed/video_speed.py','training_coach.py','equipment_kb/__init__.py','equipment_kb/recommender.py','equipment_kb/equipment.json'):
