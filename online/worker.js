@@ -1,3 +1,6 @@
+const siteRuntime=new URL('./runtime/',self.location.href).href;
+importScripts('./runtime-fetch.js');
+self.fetch=createRuntimeFetch({siteBase:siteRuntime,acceleratedBase:'https://cdn.jsdelivr.net/pyodide/v0.28.3/full/',nativeFetch:self.fetch.bind(self),accelerated:!['localhost','127.0.0.1','[::1]'].includes(self.location.hostname),onFallback:()=>postMessage({type:'status',text:'加速源暂不可用，正在使用本站备用引擎…'})});
 let pythonPromise;
 async function runtime(){
  if(!pythonPromise)pythonPromise=(async()=>{

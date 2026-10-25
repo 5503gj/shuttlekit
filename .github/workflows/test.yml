@@ -32,6 +32,7 @@ jobs:
           path: .runtime-cache
           key: pyodide-0.28.3-v1
       - run: python scripts/build_online.py
+      - run: node --test tests/runtime-fetch.test.cjs
       - run: npm run test:online
       - uses: actions/configure-pages@v5
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

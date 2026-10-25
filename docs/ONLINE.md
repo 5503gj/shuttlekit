@@ -18,6 +18,6 @@
 
 ## Python/WebAssembly运行时
 
-使用[Pyodide官方Worker模式](https://pyodide.org/en/0.28.3/usage/webworker.html)及[包目录](https://pyodide.org/en/0.28.3/usage/packages-in-pyodide.html)，锁定0.28.3。构建时获取运行时与wheel并校验锁文件及包SHA256，随后全部发布在本站，不在访客运行时依赖外部CDN。许可证随runtime/LICENSE提供，各wheel保留自身许可证。
+使用[Pyodide官方Worker模式](https://pyodide.org/en/0.28.3/usage/webworker.html)及[包目录](https://pyodide.org/en/0.28.3/usage/packages-in-pyodide.html)，锁定0.28.3。构建时获取运行时与wheel并校验锁文件及包SHA256，随后全部发布在本站。线上优先从官方文档推荐的固定版本jsDelivr加速下载不可变运行时资源，失败自动回退本站同版本；源码与用户数据不走加速源。本地预览优先使用本站资源。许可证随runtime/LICENSE提供，各wheel保留自身许可证。
 
 Python算法源码由构建脚本从原模块打包进python-source.zip，避免另写一套近似算法。浏览器版OpenCV等依赖版本由Pyodide锁定，与服务版的像素输出不承诺逐位完全相同。
